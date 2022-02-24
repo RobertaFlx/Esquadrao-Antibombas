@@ -2,6 +2,9 @@ module Start where
 
 import System.Random
 import System.Exit
+import Data.Time (getCurrentTime)
+import Data.Time.Clock (diffUTCTime)
+import Data.Time
 
 type Coordenadas = (Int, Int)
 type Valor = Int
@@ -84,9 +87,15 @@ hiddenAccount num (((x, y), v) : mtz) =
         (hiddenAccount (num+1) mtz) 
         else (hiddenAccount (num) mtz)
 
-actions :: Int -> Int -> Int -> Matriz -> Matriz -> IO()
-actions quantLinhas quantColunas quantBombas mtzInterna mtzUsuario = do
+actions :: Int -> Int -> Int -> Matriz -> Matriz -> UTCTime -> IO()
+actions quantLinhas quantColunas quantBombas mtzInterna mtzUsuario time = do
     entrada <- getLine
+    
+    -- Pega o tempo atual de cada entrada do usuário
+    timeAtual <- getCurrentTime
+    -- Verifica a diferença do tempo em S
+    let diferenca = realToFrac (diffUTCTime timeAtual time)
+    
     
     putStrLn"\n"
     
@@ -94,8 +103,12 @@ actions quantLinhas quantColunas quantBombas mtzInterna mtzUsuario = do
     let acao = jogada !! 0
     let x = read (jogada !! 1) :: Int
     let y = read (jogada !! 2) :: Int
-
-    if(acao == "Abrir") then do
+    
+    -- Se for maior que 120s de diferença o jogador perde, por causa do tempo esgotado.
+    if(diferenca >= 120.00) then do
+    	putStrLn("Você perdeu! Tempo esgotado!")
+    	
+    else if(acao == "Abrir") then do
         let matrizUsuario = if(checkPosition (x, y) mtzInterna) then revealsMatriz mtzInterna mtzInterna mtzUsuario else modifyMatriz x y mtzInterna mtzUsuario
         let matrizUsuarioReveladaRecursivamente = revealing quantLinhas quantColunas matrizUsuario matrizUsuario mtzInterna
 
@@ -104,10 +117,10 @@ actions quantLinhas quantColunas quantBombas mtzInterna mtzUsuario = do
             putStrLn "PERDEU"
                 else if (hiddenAccount 0 matrizUsuarioReveladaRecursivamente == quantBombas) then 
                     putStrLn "VENCEU" 
-                    else actions quantLinhas quantColunas quantBombas mtzInterna matrizUsuario 
+                    else actions quantLinhas quantColunas quantBombas mtzInterna matrizUsuario time
     else do
         putStrLn "Opcão inválida"
-        actions quantLinhas quantColunas quantBombas mtzInterna mtzUsuario      
+        actions quantLinhas quantColunas quantBombas mtzInterna mtzUsuario time  
     
       
 createMatriz :: Int -> Int -> Int -> Matriz
@@ -223,9 +236,12 @@ startGame = do
     printMatriz quantLinhas quantColunas matrizInicial
     
     putStrLn "Informe a sua jogada:" 
-
-    --Chama função relacionada a jogada do usuário 
-    actions quantLinhas quantColunas quantBombas preparaCampo matrizInicial
+    
+    -- Pega o tempo do usuário assim que ele inicia o jogo
+    time <- getCurrentTime
+    
+    --Chama função relacionada a jogada do usuário com o time
+    actions quantLinhas quantColunas quantBombas preparaCampo matrizInicial time
 
 
 main :: IO()
