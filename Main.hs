@@ -34,7 +34,7 @@ commandsTable = [
     " s / w - mover cursor  ", 
     " f - selecionar        "]
 
--- cria o menu e imprime ele na tela
+-- Cria o menu e imprime ele na tela
 printMenu :: [[Char]] -> IO()
 printMenu menuTab = do
     let initialBuffer = Scr.createScreenBuffer Scr.width Scr.height Scr.emptyPxl
@@ -61,22 +61,22 @@ mainLoop index = do
 
     printMenu $ printArrow menu index
     
-    -- pega um unico caracter da entrada
+    -- Pega um unico caracter da entrada
     hSetBuffering stdin NoBuffering
     command <- getChar
     hSetBuffering stdin LineBuffering
 
-    -- recalcula posicao do cursor
+    -- Recalcula posicao do cursor
     let newIndex = case command of 'w' -> ((pred index) + maxIndex) `mod` maxIndex
                                    's' -> ((succ index) + maxIndex) `mod` maxIndex
                                    cmd -> index
 
 
-    if command == 'f' && index == 3 then exitSuccess   -- desistir da partida
+    if command == 'f' && index == 3 then exitSuccess  -- Sair do Jogo
     else if command =='f' && index == 2 then Crdt.main
     else if command == 'f' && index == 1 then Rls.main
-    else if command == 'f' && index == 0 then Stt.main -- iniciar jogo
-    else putStrLn ""       -- continua no menu
+    else if command == 'f' && index == 0 then Stt.main -- Inicia Jogo
+    else putStrLn ""       -- Continua no menu
 
     mainLoop newIndex
 

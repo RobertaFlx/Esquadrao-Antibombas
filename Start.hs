@@ -11,6 +11,38 @@ type Valor = Int
 type Elem = (Coordenadas,Valor)
 type Matriz = [Elem]
 
+printWin :: IO()
+printWin = do
+    putStrLn " __________________________________________ "
+    putStrLn "|                                          |" 
+    putStrLn "|         █▀▀ █▀█ █▄ █ █ █ █▀█ █ █         |" 
+    putStrLn "|         █ ▄ █▀█ █ ▀█ █▀█ █ █ █ █         |"
+    putStrLn "|         ▀▀▀ ▀ ▀ ▀  ▀ ▀ ▀ ▀▀▀  ▀▀         |"
+    putStrLn "|__________________________________________|"
+    
+printLose :: IO()
+printLose = do
+    putStrLn " __________________________________________ "
+    putStrLn "|                                          |" 
+    putStrLn "|         █▀█ █▀▀ █▀█ █▀▄ █▀▀ █ █          |" 
+    putStrLn "|         █▀▀ █▀  █▀▄ █ █ █▀  █ █          |"
+    putStrLn "|         ▀   ▀▀▀ ▀ ▀ ▀▀  ▀▀▀  ▀▀          |"
+    putStrLn "|__________________________________________|"
+    
+printTimesUP :: IO()
+printTimesUP = do
+    putStrLn " __________________________________________ "
+    putStrLn "|                                          |" 
+    putStrLn "|          ▀█▀ █▀▀ █▀▄▀█ █▀█ █▀█           |" 
+    putStrLn "|           █  █▀  █ █ █ █▀▀ █ █           |"
+    putStrLn "|           ▀  ▀▀▀ ▀ ▀ ▀ ▀   ▀▀▀           |"
+    putStrLn "|                                          |"
+    putStrLn "|     █▀▀ █▀▀ █▀▀ █▀█ ▀█▀ █▀█ █▀▄ █▀█      |" 
+    putStrLn "|     █▀  ▀▀█ █ ▄ █ █  █  █▀█ █ █ █ █      |"
+    putStrLn "|     ▀▀▀ ▀▀▀ ▀▀▀ ▀▀▀  ▀  ▀ ▀ ▀▀  ▀▀▀      |"
+    putStrLn "|__________________________________________|"
+    
+    
 -- Função que retorna true se a posição indicada for uma bomba
 checkPosition :: (Int, Int) -> Matriz -> Bool
 checkPosition tupla [] = False
@@ -88,14 +120,14 @@ hiddenAccount num (((x, y), v) : mtz) =
         else (hiddenAccount (num) mtz)
 
 actions :: Int -> Int -> Int -> Matriz -> Matriz -> UTCTime -> IO()
-actions quantLinhas quantColunas quantBombas mtzInterna mtzUsuario time = do
+actions quantLinhas quantColunas quantBombsLetais mtzInterna mtzUsuario time = do
     entrada <- getLine
     
     -- Pega o tempo atual de cada entrada do usuário
     timeAtual <- getCurrentTime
-    -- Verifica a diferença do tempo em S
-    let diferenca = realToFrac (diffUTCTime timeAtual time)
     
+    -- Verifica a diferença do tempo em segundos
+    let diferenca = realToFrac (diffUTCTime timeAtual time)
     
     putStrLn"\n"
     
@@ -104,23 +136,32 @@ actions quantLinhas quantColunas quantBombas mtzInterna mtzUsuario time = do
     let x = read (jogada !! 1) :: Int
     let y = read (jogada !! 2) :: Int
     
-    -- Se for maior que 120s de diferença o jogador perde, por causa do tempo esgotado.
-    if(diferenca >= 120.00) then do
-    	putStrLn("Você perdeu! Tempo esgotado!")
+    -- Se for maior que 300 segundos de diferença o jogador perde, por causa do tempo esgotado.
+    if(diferenca >= 300.00) then do
+    	printTimesUP
+    	exitSuccess
     	
     else if(acao == "Abrir") then do
         let matrizUsuario = if(checkPosition (x, y) mtzInterna) then revealsMatriz mtzInterna mtzInterna mtzUsuario else modifyMatriz x y mtzInterna mtzUsuario
         let matrizUsuarioReveladaRecursivamente = revealing quantLinhas quantColunas matrizUsuario matrizUsuario mtzInterna
 
         printMatriz quantLinhas quantColunas (matrizUsuarioReveladaRecursivamente)
-        if(checkPosition (x, y) mtzInterna) then
-            putStrLn "PERDEU"
-                else if (hiddenAccount 0 matrizUsuarioReveladaRecursivamente == quantBombas) then 
-                    putStrLn "VENCEU" 
-                    else actions quantLinhas quantColunas quantBombas mtzInterna matrizUsuario time
+        
+        if(checkPosition (x, y) mtzInterna) then do
+            printLose
+            exitSuccess
+                else if (hiddenAccount 0 matrizUsuarioReveladaRecursivamente == quantBombsLetais) then do
+                    printWin 
+                    exitSuccess
+                    else do 
+                        putStrLn "\nInforme a sua jogada:"
+                        actions quantLinhas quantColunas quantBombsLetais mtzInterna matrizUsuario time
+    else if(acao == "Sair") then do
+       exitSuccess
     else do
         putStrLn "Opcão inválida"
-        actions quantLinhas quantColunas quantBombas mtzInterna mtzUsuario time  
+        putStrLn "\nInforme a sua jogada:"
+        actions quantLinhas quantColunas quantBombsLetais mtzInterna mtzUsuario time  
     
       
 createMatriz :: Int -> Int -> Int -> Matriz
@@ -128,8 +169,8 @@ createMatriz a b c = [((x,y), c) | x <-[1,2..a], y <-[1,2..b]]
 
 generateRandomPositions :: Int -> Int -> Int -> Int -> Int -> [(Int, Int)] -> [(Int, Int)]
 generateRandomPositions quantLinhas quantColunas 0 random1 random2 lista = lista
-generateRandomPositions quantLinhas quantColunas quantBombas random1 random2 lista =
-    generateRandomPositions quantLinhas quantColunas (quantBombas-1) (random1 + 59) (random2 + 277) ((generateRandomTuple quantLinhas quantColunas random1 random2 lista) : lista)  
+generateRandomPositions quantLinhas quantColunas quantBombsLetais random1 random2 lista =
+    generateRandomPositions quantLinhas quantColunas (quantBombsLetais-1) (random1 + 59) (random2 + 277) ((generateRandomTuple quantLinhas quantColunas random1 random2 lista) : lista)  
     
 generateRandomTuple :: Int -> Int -> Int -> Int -> [(Int, Int)] -> (Int, Int)
 generateRandomTuple quantLinhas quantColunas random1 random2 lista
@@ -159,7 +200,7 @@ insertBombLetal :: Int -> Int -> Matriz -> Matriz -> Matriz
 insertBombLetal a b [] mtzFinal = mtzFinal
 insertBombLetal a b (((x, y), z): mtz) mtzFinal = 
     if(a == x && b == y) then
-        mtzFinal++[((x, y), -3)]++mtz 
+        mtzFinal++[((x, y), -1)]++mtz 
     else
         insertBombLetal a b mtz (mtzFinal++[((x, y), z)])
         
@@ -168,7 +209,7 @@ insertBomb :: Int -> Int -> Matriz -> Matriz -> Matriz
 insertBomb a b [] mtzFinal = mtzFinal
 insertBomb a b (((x, y), z): mtz) mtzFinal = 
     if(a == x && b == y) then
-        mtzFinal++[((x, y), -1)]++mtz 
+        mtzFinal++[((x, y), -3)]++mtz 
     else
         insertBomb a b mtz (mtzFinal++[((x, y), z)])
 
@@ -225,9 +266,12 @@ startGame :: IO()
 startGame = do
     let quantLinhas = 9
     let quantColunas = 9
-    let quantBombas = 5
-    -- Inserindo Bombas Letais
-    let quantBombsLetais = 5
+    
+    -- Bombas desarmáveis
+    let quantBombas = 4
+    
+    -- Bombas Letais
+    let quantBombsLetais = 8
     
     putStrLn"\n"
     
@@ -240,7 +284,7 @@ startGame = do
     let (c,d) = randomR (1,999999 :: Int) h
     let random2 = c
     
-    -- funcao random letais
+    --Função para fazer o random das posições das bombas Letais
     s <- newStdGen
     let (e,f) = randomR (1,999999 :: Int) s
     let random3 = e
@@ -251,33 +295,29 @@ startGame = do
 
     let matriz = createMatriz quantLinhas quantColunas 0
     
-    -- Alterando para as posições aletórias considerar também a quantidade de bombas letais e bombas normais
+    -- Funções para gerar posições aleatórias para cada tipo de bomba
     
-    let posicoesAletorias = generateRandomPositions quantLinhas quantColunas quantBombas random1 random2 []
+    let posicoesAletoriasL = generateRandomPositions quantLinhas quantColunas quantBombsLetais random1 random2 []
     
-    let posicoesAletoriasL = generateRandomPositions quantLinhas quantColunas quantBombsLetais random3 random4 []
+    let posicoesAletorias = generateRandomPositions quantLinhas quantColunas quantBombas random3 random4 []
     
-    let matrizComBombas = (addBombs posicoesAletorias matriz)
+    let matrizComBombasLetais = (addBombsLetais posicoesAletoriasL matriz)
     
-    -- Alterando para matriz com bombas pegar também as bombas letais
-    let preparaCampo = adjacentBombs matrizComBombas matrizComBombas
+    let preparaCampo = adjacentBombs matrizComBombasLetais matrizComBombasLetais
     
-    -- Alterando para matriz com bombas pegar também as bombas letais
-    let matrizComBombasLetais = (addBombsLetais posicoesAletoriasL preparaCampo)
+    let matrizCompleta = (addBombs posicoesAletorias preparaCampo)
 
     let matrizInicial = (createMatriz quantLinhas quantColunas (-2))
     
     printMatriz quantLinhas quantColunas matrizInicial
     
-    
     putStrLn "Informe a sua jogada:" 
-
     
     -- Pega o tempo do usuário assim que ele inicia o jogo
     time <- getCurrentTime
     
     --Chama função relacionada a jogada do usuário com o time
-    actions quantLinhas quantColunas quantBombas matrizComBombasLetais matrizInicial time
+    actions quantLinhas quantColunas quantBombsLetais matrizCompleta matrizInicial time
 
 
 main :: IO()

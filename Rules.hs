@@ -3,7 +3,6 @@ module Rules where
 import qualified Screen as Scr
 import System.IO
 import System.IO.Unsafe (unsafeDupablePerformIO)
-import System.Exit
 import Control.Concurrent
  
 
@@ -22,10 +21,11 @@ texto = [
     "|                                                                                                                               |",
     "|   >>> Se o jogador errar mais de três vezes, ficará abaixo da média e reprovará no teste, desta forma, o jogo termina.        |",
     "|                                                                                                                               |",
-    "|   >>> Erros são contados apenas quando o jogador tentar abrir caminho em um campo que possui uma bomba e tentar desativar     |",
-    "|       uma bomba em um campo que não possui bomba.                                                                             |",
+    "|   >>> Erros são contados apenas quando o jogador tentar desativar uma bomba em um campo que não possui bomba ou abrir um      |",
+    "|       caminho já revelado.                                                                                                    |",
     "|                                                                                                                               |",
-    "|   >>> Se o jogador tentar desarmar uma bomba letal, automaticamente, ele é reprovado no teste e o jogo termina.               |",
+    "|   >>> Se o jogador tentar desarmar ou abrir caminho em uma bomba letal, automaticamente, ele é reprovado no teste e o         |",
+    "|       jogo termina.                                                                                                           |",
     "|                                                                                                                               |",
     "|   >>> Se o tempo acabar ou a quantidade de jogadas zerar, o jogador é reprovado e o jogo termina.                             |",
     "|_______________________________________________________________________________________________________________________________|"]
@@ -38,7 +38,7 @@ commandsTable :: [[Char]]
 commandsTable = [ 
     " f - selecionar        "]
 
--- cria o menu e imprime ele na tela
+-- Cria o menu e imprime ele na tela
 printMenu :: [[Char]] -> IO()
 printMenu menuTab = do
 
@@ -59,12 +59,12 @@ mainLoop index = do
 
     printMenu $ menu 
 
-    -- pega um unico caracter da entrada
+    -- Pega um unico caracter da entrada
     hSetBuffering stdin NoBuffering
     command <- getChar
     hSetBuffering stdin LineBuffering
 
-    -- processa o comando recebido
+    -- Processa o comando recebido
     case command of 'f' -> putStrLn " "
                     cmd -> mainLoop 0
  
