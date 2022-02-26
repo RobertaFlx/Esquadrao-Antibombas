@@ -149,6 +149,20 @@ addBombs :: [(Int, Int)] -> Matriz -> Matriz
 addBombs [] mtz = mtz
 addBombs ((x, y): mtzTail) mtz = addBombs mtzTail (insertBomb x y mtz [])  
 
+-- Adiciona bombas letais
+addBombsLetais :: [(Int, Int)] -> Matriz -> Matriz
+addBombsLetais [] mtz = mtz
+addBombsLetais ((x, y): mtzTail) mtz = addBombsLetais mtzTail (insertBombLetal x y mtz [])  
+
+-- Funcao que insere uma bomba na posicao passada como parametro
+insertBombLetal :: Int -> Int -> Matriz -> Matriz -> Matriz
+insertBombLetal a b [] mtzFinal = mtzFinal
+insertBombLetal a b (((x, y), z): mtz) mtzFinal = 
+    if(a == x && b == y) then
+        mtzFinal++[((x, y), -3)]++mtz 
+    else
+        insertBombLetal a b mtz (mtzFinal++[((x, y), z)])
+        
 -- Funcao que insere uma bomba na posicao passada como parametro
 insertBomb :: Int -> Int -> Matriz -> Matriz -> Matriz
 insertBomb a b [] mtzFinal = mtzFinal
@@ -195,7 +209,8 @@ convertIntToString :: [Int] -> String
 convertIntToString [] = ""
 convertIntToString (h:t) 
     | h == -2 = "* " ++ convertIntToString t
-    | h == -1 = "B " ++ convertIntToString t
+    | h == -3 = "B " ++ convertIntToString t
+    | h == -1 = "L " ++ convertIntToString t
     | otherwise = show h ++ " " ++ convertIntToString t    
     
 -- Retorna uma lista de inteiros com os valores da linha passada como parametro
@@ -210,7 +225,9 @@ startGame :: IO()
 startGame = do
     let quantLinhas = 9
     let quantColunas = 9
-    let quantBombas = 9
+    let quantBombas = 5
+    -- Inserindo Bombas Letais
+    let quantBombsLetais = 5
     
     putStrLn"\n"
     
@@ -222,26 +239,45 @@ startGame = do
     h <- newStdGen
     let (c,d) = randomR (1,999999 :: Int) h
     let random2 = c
+    
+    -- funcao random letais
+    s <- newStdGen
+    let (e,f) = randomR (1,999999 :: Int) s
+    let random3 = e
+
+    t <- newStdGen
+    let (o,p) = randomR (1,999999 :: Int) t
+    let random4 = o
 
     let matriz = createMatriz quantLinhas quantColunas 0
     
+    -- Alterando para as posições aletórias considerar também a quantidade de bombas letais e bombas normais
+    
     let posicoesAletorias = generateRandomPositions quantLinhas quantColunas quantBombas random1 random2 []
+    
+    let posicoesAletoriasL = generateRandomPositions quantLinhas quantColunas quantBombsLetais random3 random4 []
     
     let matrizComBombas = (addBombs posicoesAletorias matriz)
     
+    -- Alterando para matriz com bombas pegar também as bombas letais
     let preparaCampo = adjacentBombs matrizComBombas matrizComBombas
+    
+    -- Alterando para matriz com bombas pegar também as bombas letais
+    let matrizComBombasLetais = (addBombsLetais posicoesAletoriasL preparaCampo)
 
     let matrizInicial = (createMatriz quantLinhas quantColunas (-2))
     
     printMatriz quantLinhas quantColunas matrizInicial
     
+    
     putStrLn "Informe a sua jogada:" 
+
     
     -- Pega o tempo do usuário assim que ele inicia o jogo
     time <- getCurrentTime
     
     --Chama função relacionada a jogada do usuário com o time
-    actions quantLinhas quantColunas quantBombas preparaCampo matrizInicial time
+    actions quantLinhas quantColunas quantBombas matrizComBombasLetais matrizInicial time
 
 
 main :: IO()
