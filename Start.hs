@@ -43,15 +43,24 @@ printTimesUP = do
     putStrLn "|__________________________________________|"
     
     
--- Função que retorna true se a posição indicada for uma bomba
-checkPosition :: (Int, Int) -> Matriz -> Bool
-checkPosition tupla [] = False
-checkPosition (x, y) (((a, b), c): mtzTail) = 
+-- Função que retorna true se a posição indicada for uma bomba letal
+checkPositionIsLetalBomb :: (Int, Int) -> Matriz -> Bool
+checkPositionIsLetalBomb tupla [] = False
+checkPositionIsLetalBomb (x, y) (((a, b), c): mtzTail) = 
     if (x == a && y == b && c == -1) then 
         True 
     else 
-        checkPosition (x, y) mtzTail 
-
+        checkPositionIsLetalBomb (x, y) mtzTail 
+        
+-- Função que retorna true se a posição indicada for uma bomba desarmável 
+checkPositionIsBomb :: (Int, Int) -> Matriz -> Bool
+checkPositionIsBomb tupla [] = False
+checkPositionIsBomb (x, y) (((a, b), c): mtzTail) = 
+    if (x == a && y == b && c == -3) then 
+        True 
+    else 
+        checkPositionIsBomb (x, y) mtzTail 
+        
 -- Função que modifica a matriz que é mostrada ao usuário usando a matriz interna
 revealsMatriz :: Matriz -> Matriz -> Matriz -> Matriz
 revealsMatriz [] mtzInterna mtzUsuario = mtzUsuario
@@ -119,8 +128,8 @@ hiddenAccount num (((x, y), v) : mtz) =
         (hiddenAccount (num+1) mtz) 
         else (hiddenAccount (num) mtz)
 
-actions :: Int -> Int -> Int -> Matriz -> Matriz -> UTCTime -> IO()
-actions quantLinhas quantColunas quantBombsLetais mtzInterna mtzUsuario time = do
+actions :: Int -> Int -> Int -> Matriz -> Matriz -> Matriz -> UTCTime -> IO()
+actions quantLinhas quantColunas quantBombsLetais mtzInterna mtzUsuario mtzDesativada time = do
     entrada <- getLine
     
     -- Pega o tempo atual de cada entrada do usuário
@@ -136,32 +145,53 @@ actions quantLinhas quantColunas quantBombsLetais mtzInterna mtzUsuario time = d
     let x = read (jogada !! 1) :: Int
     let y = read (jogada !! 2) :: Int
     
-    -- Se for maior que 300 segundos de diferença o jogador perde, por causa do tempo esgotado.
+    let matrizUsuario = modifyMatriz x y mtzInterna mtzUsuario
+    let matrizUsuarioRevelada = revealing quantLinhas quantColunas matrizUsuario matrizUsuario mtzInterna
+    let matrizInternaRevelada = revealsMatriz mtzInterna mtzInterna mtzUsuario
+    let mtzUsuarioDesativada = modifyMatriz x y mtzDesativada matrizUsuarioRevelada
+    
+    -- Se for maior que 300 segundos de diferença o jogador perde, por causa do tempo esgotado
     if(diferenca >= 300.00) then do
     	printTimesUP
     	exitSuccess
-    	
     else if(acao == "Abrir") then do
-        let matrizUsuario = if(checkPosition (x, y) mtzInterna) then revealsMatriz mtzInterna mtzInterna mtzUsuario else modifyMatriz x y mtzInterna mtzUsuario
-        let matrizUsuarioReveladaRecursivamente = revealing quantLinhas quantColunas matrizUsuario matrizUsuario mtzInterna
-
-        printMatriz quantLinhas quantColunas (matrizUsuarioReveladaRecursivamente)
-        
-        if(checkPosition (x, y) mtzInterna) then do
+        printMatriz quantLinhas quantColunas (matrizUsuarioRevelada)
+        if(checkPositionIsLetalBomb (x, y) mtzInterna) then do
+            printMatriz quantLinhas quantColunas (matrizInternaRevelada) 
             printLose
             exitSuccess
-                else if (hiddenAccount 0 matrizUsuarioReveladaRecursivamente == quantBombsLetais) then do
+                else if (hiddenAccount 0 matrizUsuarioRevelada == quantBombsLetais) then do --Adicionar também como condição para ganhar, a contagem e verificação das                 bombas desarmadas
                     printWin 
                     exitSuccess
-                    else do 
+                    
+                    --Adicionar condição e função de retirar vida caso o usuário tente abrir uma posição já revelada
+                    
+                    else do
                         putStrLn "\nInforme a sua jogada:"
-                        actions quantLinhas quantColunas quantBombsLetais mtzInterna matrizUsuario time
+                        actions quantLinhas quantColunas quantBombsLetais mtzInterna matrizUsuario mtzDesativada time
+    else if(acao == "Desativar") then do
+        if(checkPositionIsLetalBomb (x, y) mtzInterna) then do 
+            printMatriz quantLinhas quantColunas (matrizInternaRevelada) 
+            printLose
+            exitSuccess
+            else if(checkPositionIsBomb (x, y) mtzInterna) then do
+                printMatriz quantLinhas quantColunas (mtzUsuarioDesativada) 
+                putStrLn "\nInforme a sua jogada:"
+                actions quantLinhas quantColunas quantBombsLetais mtzInterna mtzUsuarioDesativada mtzDesativada time
+                else do
+                    printMatriz quantLinhas quantColunas (matrizUsuarioRevelada)
+                    putStrLn "\nVocê perdeu uma vida por tentar desarmar uma posição sem bomba."
+                    
+                    --Adicionar aqui implementação de Função que retira vida
+                    
+                    putStrLn "\nInforme a sua jogada:"
+                    actions quantLinhas quantColunas quantBombsLetais mtzInterna matrizUsuario mtzDesativada time
     else if(acao == "Sair") then do
        exitSuccess
     else do
         putStrLn "Opcão inválida"
         putStrLn "\nInforme a sua jogada:"
-        actions quantLinhas quantColunas quantBombsLetais mtzInterna mtzUsuario time  
+        actions quantLinhas quantColunas quantBombsLetais mtzInterna mtzUsuario mtzDesativada time  
     
       
 createMatriz :: Int -> Int -> Int -> Matriz
@@ -252,6 +282,7 @@ convertIntToString (h:t)
     | h == -2 = "* " ++ convertIntToString t
     | h == -3 = "B " ++ convertIntToString t
     | h == -1 = "L " ++ convertIntToString t
+    | h == -4 = "D " ++ convertIntToString t
     | otherwise = show h ++ " " ++ convertIntToString t    
     
 -- Retorna uma lista de inteiros com os valores da linha passada como parametro
@@ -309,6 +340,8 @@ startGame = do
 
     let matrizInicial = (createMatriz quantLinhas quantColunas (-2))
     
+    let matrizDesativada = (createMatriz quantLinhas quantColunas (-4))
+    
     printMatriz quantLinhas quantColunas matrizInicial
     
     putStrLn "Informe a sua jogada:" 
@@ -317,7 +350,7 @@ startGame = do
     time <- getCurrentTime
     
     --Chama função relacionada a jogada do usuário com o time
-    actions quantLinhas quantColunas quantBombsLetais matrizCompleta matrizInicial time
+    actions quantLinhas quantColunas quantBombsLetais matrizCompleta matrizInicial matrizDesativada time
 
 
 main :: IO()
