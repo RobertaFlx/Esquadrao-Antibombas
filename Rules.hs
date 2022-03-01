@@ -27,7 +27,7 @@ texto = [
     "|   >>> Se o jogador tentar desarmar ou abrir caminho em uma bomba letal, automaticamente, ele é reprovado no teste e o         |",
     "|       jogo termina.                                                                                                           |",
     "|                                                                                                                               |",
-    "|   >>> Se o tempo acabar ou a quantidade de jogadas zerar, o jogador é reprovado e o jogo termina.                             |",
+    "|   >>> Um cronometro é iniciado junto com o início da partida, se o cronometro zerar, o jogador é reprovado e o jogo termina.  |",                                             
     "|_______________________________________________________________________________________________________________________________|"]
 
 menu :: [[Char]]

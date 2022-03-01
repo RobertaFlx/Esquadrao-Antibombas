@@ -1,5 +1,6 @@
 module Start where
 
+import qualified Instructions as Instt 
 import System.Random
 import System.Exit
 import Data.Time (getCurrentTime)
@@ -162,8 +163,9 @@ actions quantLinhas quantColunas quantBombsLetais mtzInterna mtzUsuario mtzAnter
     let matrizInternaRevelada = revealsMatriz mtzInterna mtzInterna mtzUsuario
     let mtzUsuarioDesativada = modifyMatriz x y mtzDesativada matrizUsuarioRevelada
     
-    -- Se for maior que 300 segundos de diferença o jogador perde, por causa do tempo esgotado
-    if(diferenca >= 300.00) then do
+    -- Se for maior que 480 segundos de diferença o jogador perde, por causa do tempo esgotado
+    if(diferenca >= 480.00) then do
+        putStrLn "\nO tempo de jogo expirou"
     	printTimesUP
     	exitSuccess
     	
@@ -314,7 +316,7 @@ convertIntToString (h:t)
     | h == -2 = "* " ++ convertIntToString t
     | h == -3 = "\ESC[92mB\ESC[0m " ++ convertIntToString t
     | h == -1 = "\ESC[31mL\ESC[0m " ++ convertIntToString t
-    | h == -4 = "D " ++ convertIntToString t
+    | h == -4 = "\ESC[32mD\ESC[0m " ++ convertIntToString t
     | otherwise = show h ++ " " ++ convertIntToString t    
     
 -- Retorna uma lista de inteiros com os valores da linha passada como parametro
@@ -382,14 +384,12 @@ startGame = do
     -- Define a quantidade de vidas disponíveis para o usuário
     let life = 3
     
-    -- Define a quantidade de jogadas permitidas
-    let jogadas_max = 40
-    
     --Chama função relacionada a jogada do usuário com o time
     actions quantLinhas quantColunas quantBombsLetais matrizCompleta matrizInicial matrizInicial matrizDesativada time life 
 
 main :: IO()
 main = do
+    Instt.main
     startGame
 
         
