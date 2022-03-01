@@ -51,7 +51,16 @@ checkPositionIsLetalBomb (x, y) (((a, b), c): mtzTail) =
         True 
     else 
         checkPositionIsLetalBomb (x, y) mtzTail 
-        
+
+-- Função que retorna true se a posição indicada já tenha sido revelada nas jogadas anteriores
+checkPositionIsRevealed :: (Int, Int) -> Matriz -> Bool
+checkPositionIsRevealed tupla [] = False
+checkPositionIsRevealed (x, y) (((a, b), c): mtzTail) = 
+    if (x == a && y == b && c /= -2) then 
+        True
+    else 
+        checkPositionIsRevealed (x, y) mtzTail 
+                
 -- Função que retorna true se a posição indicada for uma bomba desarmável 
 checkPositionIsBomb :: (Int, Int) -> Matriz -> Bool
 checkPositionIsBomb tupla [] = False
@@ -128,8 +137,11 @@ hiddenAccount num (((x, y), v) : mtz) =
         (hiddenAccount (num+1) mtz) 
         else (hiddenAccount (num) mtz)
 
-actions :: Int -> Int -> Int -> Matriz -> Matriz -> Matriz -> UTCTime -> IO()
-actions quantLinhas quantColunas quantBombsLetais mtzInterna mtzUsuario mtzDesativada time = do
+actions :: Int -> Int -> Int -> Matriz -> Matriz -> Matriz ->  Matriz -> UTCTime ->Int -> IO()
+actions quantLinhas quantColunas quantBombsLetais mtzInterna mtzUsuario mtzAnteriorRevelada mtzDesativada time life = do
+
+    putStrLn "\nInforme a sua jogada:"
+    
     entrada <- getLine
     
     -- Pega o tempo atual de cada entrada do usuário
@@ -138,12 +150,12 @@ actions quantLinhas quantColunas quantBombsLetais mtzInterna mtzUsuario mtzDesat
     -- Verifica a diferença do tempo em segundos
     let diferenca = realToFrac (diffUTCTime timeAtual time)
     
-    putStrLn"\n"
-    
+    putStrLn "\n"
     let jogada = words entrada
     let acao = jogada !! 0
     let x = read (jogada !! 1) :: Int
     let y = read (jogada !! 2) :: Int
+    
     
     let matrizUsuario = modifyMatriz x y mtzInterna mtzUsuario
     let matrizUsuarioRevelada = revealing quantLinhas quantColunas matrizUsuario matrizUsuario mtzInterna
@@ -154,45 +166,65 @@ actions quantLinhas quantColunas quantBombsLetais mtzInterna mtzUsuario mtzDesat
     if(diferenca >= 300.00) then do
     	printTimesUP
     	exitSuccess
+    	
+    -- Quando o usuário selecionar a opção de Abrir caminho
     else if(acao == "Abrir") then do
         printMatriz quantLinhas quantColunas (matrizUsuarioRevelada)
-        if(checkPositionIsLetalBomb (x, y) mtzInterna) then do
+        if(checkPositionIsLetalBomb (x, y) mtzInterna)  then do
             printMatriz quantLinhas quantColunas (matrizInternaRevelada) 
             printLose
             exitSuccess
-                else if (hiddenAccount 0 matrizUsuarioRevelada == quantBombsLetais) then do --Adicionar também como condição para ganhar, a contagem e verificação das                 bombas desarmadas
-                    printWin 
-                    exitSuccess
-                    
-                    --Adicionar condição e função de retirar vida caso o usuário tente abrir uma posição já revelada
-                    
-                    else do
-                        putStrLn "\nInforme a sua jogada:"
-                        actions quantLinhas quantColunas quantBombsLetais mtzInterna matrizUsuario mtzDesativada time
+        
+        -- Condição e função de retirar vida caso o usuário tente abrir uma posição já revelada
+        else if (checkPositionIsRevealed(x,y) mtzAnteriorRevelada) then do
+            putStrLn "\nVocê perdeu uma vida por tentar abrir uma posição já revelada"
+            let life_atual = life - 1
+            -- Verifica se o usuário ainda possui vidas para prosseguir jogando
+            if (life_atual == 0) then do
+               putStrLn "\nVocê não possui vidas suficientes."
+               printLose
+               exitSuccess
+            else do
+               actions quantLinhas quantColunas quantBombsLetais mtzInterna mtzUsuario matrizUsuarioRevelada mtzDesativada time life_atual 
+        	
+        else if (hiddenAccount 0 matrizUsuarioRevelada == quantBombsLetais) then do --Adicionar também como condição para ganhar, a contagem e verificação das bombas desarmadas
+            printWin 
+            exitSuccess
+
+        else do
+            actions quantLinhas quantColunas quantBombsLetais mtzInterna matrizUsuario matrizUsuarioRevelada mtzDesativada time life
+              
+    -- Quando o usuário selecionar a opção de Desativar bomba          
     else if(acao == "Desativar") then do
         if(checkPositionIsLetalBomb (x, y) mtzInterna) then do 
             printMatriz quantLinhas quantColunas (matrizInternaRevelada) 
             printLose
             exitSuccess
-            else if(checkPositionIsBomb (x, y) mtzInterna) then do
-                printMatriz quantLinhas quantColunas (mtzUsuarioDesativada) 
-                putStrLn "\nInforme a sua jogada:"
-                actions quantLinhas quantColunas quantBombsLetais mtzInterna mtzUsuarioDesativada mtzDesativada time
-                else do
-                    printMatriz quantLinhas quantColunas (matrizUsuarioRevelada)
-                    putStrLn "\nVocê perdeu uma vida por tentar desarmar uma posição sem bomba."
+        else if(checkPositionIsBomb (x, y) mtzInterna) then do
+            printMatriz quantLinhas quantColunas (mtzUsuarioDesativada) 
+            actions quantLinhas quantColunas quantBombsLetais mtzInterna mtzUsuarioDesativada matrizUsuarioRevelada mtzDesativada time life
+        else do
+            printMatriz quantLinhas quantColunas (matrizUsuarioRevelada)
+            putStrLn "\nVocê perdeu uma vida por tentar desarmar uma posição sem bomba."
                     
-                    --Adicionar aqui implementação de Função que retira vida
-                    
-                    putStrLn "\nInforme a sua jogada:"
-                    actions quantLinhas quantColunas quantBombsLetais mtzInterna matrizUsuario mtzDesativada time
+            let life_atual = life - 1
+            -- Verifica se o usuário ainda possui vidas para prosseguir jogando
+            if (life_atual == 0) then do
+                putStrLn "\nVocê não possui vidas suficientes."
+                printLose
+                exitSuccess
+            else do
+                actions quantLinhas quantColunas quantBombsLetais mtzInterna mtzUsuario matrizUsuarioRevelada mtzDesativada time life_atual 
+    
+    -- Quando o usuário selecionar a opção de Sair do jogo               
     else if(acao == "Sair") then do
-       exitSuccess
+        exitSuccess
+        
+    -- Tratamento de entradas inválidas
     else do
         putStrLn "Opcão inválida"
-        putStrLn "\nInforme a sua jogada:"
-        actions quantLinhas quantColunas quantBombsLetais mtzInterna mtzUsuario mtzDesativada time  
-    
+        actions quantLinhas quantColunas quantBombsLetais mtzInterna mtzUsuario matrizUsuarioRevelada mtzDesativada time life 
+        
       
 createMatriz :: Int -> Int -> Int -> Matriz
 createMatriz a b c = [((x,y), c) | x <-[1,2..a], y <-[1,2..b]]
@@ -280,8 +312,8 @@ convertIntToString :: [Int] -> String
 convertIntToString [] = ""
 convertIntToString (h:t) 
     | h == -2 = "* " ++ convertIntToString t
-    | h == -3 = "B " ++ convertIntToString t
-    | h == -1 = "L " ++ convertIntToString t
+    | h == -3 = "\ESC[92mB\ESC[0m " ++ convertIntToString t
+    | h == -1 = "\ESC[31mL\ESC[0m " ++ convertIntToString t
     | h == -4 = "D " ++ convertIntToString t
     | otherwise = show h ++ " " ++ convertIntToString t    
     
@@ -344,14 +376,17 @@ startGame = do
     
     printMatriz quantLinhas quantColunas matrizInicial
     
-    putStrLn "Informe a sua jogada:" 
-    
     -- Pega o tempo do usuário assim que ele inicia o jogo
     time <- getCurrentTime
     
+    -- Define a quantidade de vidas disponíveis para o usuário
+    let life = 3
+    
+    -- Define a quantidade de jogadas permitidas
+    let jogadas_max = 40
+    
     --Chama função relacionada a jogada do usuário com o time
-    actions quantLinhas quantColunas quantBombsLetais matrizCompleta matrizInicial matrizDesativada time
-
+    actions quantLinhas quantColunas quantBombsLetais matrizCompleta matrizInicial matrizInicial matrizDesativada time life 
 
 main :: IO()
 main = do
