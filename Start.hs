@@ -42,7 +42,37 @@ printTimesUP = do
     putStrLn "|     █▀  ▀▀█ █ ▄ █ █  █  █▀█ █ █ █ █      |"
     putStrLn "|     ▀▀▀ ▀▀▀ ▀▀▀ ▀▀▀  ▀  ▀ ▀ ▀▀  ▀▀▀      |"
     putStrLn "|__________________________________________|"
+
+printLostLife :: IO()
+printLostLife = do
+    putStrLn " __________________________________________ "
+    putStrLn "|                                          |" 
+    putStrLn "|   Você não possui vidas suficientes.     |"
+    putStrLn "|                                          |" 
+    putStrLn "|               ʕ•́ᴥ•̀ʔっ♡♥                  |"
+    putStrLn "|__________________________________________|"
     
+printLostOneLife :: IO()
+printLostOneLife = do
+    putStrLn " __________________________________________ "
+    putStrLn "|                                          |"
+    putStrLn "|                 💔                       |" 
+    putStrLn "|                                          |"
+    putStrLn "|     Você perdeu uma vida por tentar      |"
+    putStrLn "|     desarmar uma posição sem bomba.      |" 
+    putStrLn "|__________________________________________|"
+    
+printLostOneLifeR :: IO()
+printLostOneLifeR = do
+    putStrLn " __________________________________________ "
+    putStrLn "|                                          |"
+    putStrLn "|                 💔                       |" 
+    putStrLn "|                                          |"
+    putStrLn "|     Você perdeu uma vida por tentar      |"
+    putStrLn "|      abrir uma posição já revelada       |" 
+    putStrLn "|__________________________________________|"
+    
+       
     
 -- Função que retorna true se a posição indicada for uma bomba letal
 checkPositionIsLetalBomb :: (Int, Int) -> Matriz -> Bool
@@ -179,11 +209,13 @@ actions quantLinhas quantColunas quantBombsLetais mtzInterna mtzUsuario mtzAnter
         
         -- Condição e função de retirar vida caso o usuário tente abrir uma posição já revelada
         else if (checkPositionIsRevealed(x,y) mtzAnteriorRevelada) then do
-            putStrLn "\nVocê perdeu uma vida por tentar abrir uma posição já revelada"
+            --putStrLn "\nVocê perdeu uma vida por tentar abrir uma posição já revelada"
+            printLostOneLifeR
             let life_atual = life - 1
             -- Verifica se o usuário ainda possui vidas para prosseguir jogando
             if (life_atual == 0) then do
-               putStrLn "\nVocê não possui vidas suficientes."
+               printLostLife
+               --putStrLn "\nVocê não possui vidas suficientes."
                printLose
                exitSuccess
             else do
@@ -207,12 +239,13 @@ actions quantLinhas quantColunas quantBombsLetais mtzInterna mtzUsuario mtzAnter
             actions quantLinhas quantColunas quantBombsLetais mtzInterna mtzUsuarioDesativada matrizUsuarioRevelada mtzDesativada time life
         else do
             printMatriz quantLinhas quantColunas (matrizUsuarioRevelada)
-            putStrLn "\nVocê perdeu uma vida por tentar desarmar uma posição sem bomba."
-                    
+            --putStrLn "\nVocê perdeu uma vida por tentar desarmar uma posição sem bomba."
+            printLostOneLife        
             let life_atual = life - 1
             -- Verifica se o usuário ainda possui vidas para prosseguir jogando
             if (life_atual == 0) then do
-                putStrLn "\nVocê não possui vidas suficientes."
+                printLostLife
+                --putStrLn "\nVocê não possui vidas suficientes."
                 printLose
                 exitSuccess
             else do
