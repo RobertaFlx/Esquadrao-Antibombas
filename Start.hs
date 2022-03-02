@@ -42,37 +42,37 @@ printTimesUP = do
     putStrLn "|     █▀  ▀▀█ █ ▄ █ █  █  █▀█ █ █ █ █      |"
     putStrLn "|     ▀▀▀ ▀▀▀ ▀▀▀ ▀▀▀  ▀  ▀ ▀ ▀▀  ▀▀▀      |"
     putStrLn "|__________________________________________|"
-
-printLostLife :: IO()
-printLostLife = do
-    putStrLn " __________________________________________ "
-    putStrLn "|                                          |" 
-    putStrLn "|   Você não possui vidas suficientes.     |"
-    putStrLn "|                                          |" 
-    putStrLn "|               ʕ•́ᴥ•̀ʔっ♡♥                  |"
-    putStrLn "|__________________________________________|"
     
-printLostOneLife :: IO()
-printLostOneLife = do
+printFullLife :: IO()
+printFullLife = do
     putStrLn " __________________________________________ "
     putStrLn "|                                          |"
-    putStrLn "|                 💔                       |" 
-    putStrLn "|                                          |"
-    putStrLn "|     Você perdeu uma vida por tentar      |"
-    putStrLn "|     desarmar uma posição sem bomba.      |" 
+    putStrLn "|     ▄███▄███▄  ▄███▄███▄  ▄███▄███▄      |" 
+    putStrLn "|     █████████  █████████  █████████      |"
+    putStrLn "|      ▀█████▀    ▀█████▀    ▀█████▀       |"
+    putStrLn "|        ▀█▀        ▀█▀        ▀█▀         |" 
     putStrLn "|__________________________________________|"
     
-printLostOneLifeR :: IO()
-printLostOneLifeR = do
+printOneLostLife :: IO()
+printOneLostLife = do
     putStrLn " __________________________________________ "
     putStrLn "|                                          |"
-    putStrLn "|                 💔                       |" 
-    putStrLn "|                                          |"
-    putStrLn "|     Você perdeu uma vida por tentar      |"
-    putStrLn "|      abrir uma posição já revelada       |" 
+    putStrLn "|     ▄███▄███▄  ▄███▄███▄                 |" 
+    putStrLn "|     █████████  █████████                 |"
+    putStrLn "|      ▀█████▀    ▀█████▀                  |"
+    putStrLn "|        ▀█▀        ▀█▀                    |" 
     putStrLn "|__________________________________________|"
     
-       
+printTwoLostLife :: IO()
+printTwoLostLife = do
+    putStrLn " __________________________________________ "
+    putStrLn "|                                          |"
+    putStrLn "|     ▄███▄███▄                            |" 
+    putStrLn "|     █████████                            |"
+    putStrLn "|      ▀█████▀                             |"
+    putStrLn "|        ▀█▀                               |" 
+    putStrLn "|__________________________________________|"
+    
 
 -- Função que retorna true se a posição indicada já tenha sido revelada nas jogadas anteriores
 checkPositionIsRevealed :: (Int, Int) -> Matriz -> Bool
@@ -204,11 +204,11 @@ actions quantLinhas quantColunas quantBombsLetais mtzInterna mtzUsuario mtzAnter
     let mtzUsuarioDesativada = modifyMatriz x y mtzDesativada matrizUsuarioRevelada
     
     -- Verifica quantas bombas precisam ser desarmadas
-    let quantidades_bombs = bombsAccount 0 mtzUsuarioDesativada
+    let quantBombasNaoDesativadas = bombsAccount 0 mtzUsuarioDesativada
     
     -- Se for maior que 480 segundos de diferença o jogador perde, por causa do tempo esgotado
     if(diferenca >= 480.00) then do
-        putStrLn "\nO tempo de jogo expirou"
+        putStrLn "\nO tempo de jogo expirou."
     	printTimesUP
     	exitSuccess
     	
@@ -222,21 +222,24 @@ actions quantLinhas quantColunas quantBombsLetais mtzInterna mtzUsuario mtzAnter
         
         -- Condição e função de retirar vida caso o usuário tente abrir uma posição já revelada
         else if (checkPositionIsRevealed(x,y) mtzAnteriorRevelada) then do
-            --putStrLn "\nVocê perdeu uma vida por tentar abrir uma posição já revelada"
-            printLostOneLifeR
-            let life_atual = life - 1
+            let lifeActual = life - 1 
+            
             -- Verifica se o usuário ainda possui vidas para prosseguir jogando
-            if (life_atual == 0) then do
-               printLostLife
-               --putStrLn "\nVocê não possui vidas suficientes."
+            if (lifeActual == 0) then do
+               putStrLn "\nVocê perdeu uma vida por tentar abrir uma posição já revelada.\nVocê não possui vidas suficientes."
                printLose
                exitSuccess
+            else if (lifeActual == 1) then do
+               printTwoLostLife
+               putStrLn "\nVocê perdeu uma vida por tentar abrir uma posição já revelada, uma restante."
+               actions quantLinhas quantColunas quantBombsLetais mtzInterna mtzUsuario matrizUsuarioRevelada mtzDesativada time lifeActual
             else do
-               actions quantLinhas quantColunas quantBombsLetais mtzInterna mtzUsuario matrizUsuarioRevelada mtzDesativada time life_atual 
+               printOneLostLife
+               putStrLn "\nVocê perdeu uma vida por tentar abrir uma posição já revelada, duas restantes."
+               actions quantLinhas quantColunas quantBombsLetais mtzInterna mtzUsuario matrizUsuarioRevelada mtzDesativada time lifeActual 
                 
-        else if (hiddenAccount 0 matrizUsuarioRevelada == quantBombsLetais) then do --Adicionar também como condição para ganhar, a contagem e verificação das bombas desarmadas
-            
-            if (quantidades_bombs == 0) then do
+        else if (hiddenAccount 0 matrizUsuarioRevelada == quantBombsLetais) then do 
+            if (quantBombasNaoDesativadas == 0) then do
                printWin 
                exitSuccess
             else do
@@ -254,8 +257,8 @@ actions quantLinhas quantColunas quantBombsLetais mtzInterna mtzUsuario mtzAnter
         
         else if(checkPositionIsBomb (x, y) mtzInterna) then do
             printMatriz quantLinhas quantColunas (mtzUsuarioDesativada) 
-            if (hiddenAccount 0 matrizUsuarioRevelada == quantBombsLetais ) then do 
-                if (quantidades_bombs == 0) then do
+            if (hiddenAccount 0 matrizUsuarioRevelada == quantBombsLetais) then do 
+                if (quantBombasNaoDesativadas == 0) then do
                     printWin 
                     exitSuccess
                 else do
@@ -264,17 +267,21 @@ actions quantLinhas quantColunas quantBombsLetais mtzInterna mtzUsuario mtzAnter
                 actions quantLinhas quantColunas quantBombsLetais mtzInterna mtzUsuarioDesativada matrizUsuarioRevelada mtzDesativada time life            
         else do
             printMatriz quantLinhas quantColunas (matrizUsuarioRevelada)
-            --putStrLn "\nVocê perdeu uma vida por tentar desarmar uma posição sem bomba."
-            printLostOneLife        
-            let life_atual = life - 1
+            let lifeActual = life - 1 
+            
             -- Verifica se o usuário ainda possui vidas para prosseguir jogando
-            if (life_atual == 0) then do
-                printLostLife
-                --putStrLn "\nVocê não possui vidas suficientes."
-                printLose
-                exitSuccess
+            if (lifeActual == 0) then do
+               putStrLn "\nVocê perdeu uma vida por tentar desarmar uma posição sem bomba.\nVocê não possui vidas suficientes."
+               printLose
+               exitSuccess
+            else if (lifeActual == 1) then do
+               printTwoLostLife
+               putStrLn "\nVocê perdeu uma vida por tentar desarmar uma posição sem bomba, uma restante."
+               actions quantLinhas quantColunas quantBombsLetais mtzInterna mtzUsuario matrizUsuarioRevelada mtzDesativada time lifeActual
             else do
-                actions quantLinhas quantColunas quantBombsLetais mtzInterna mtzUsuario matrizUsuarioRevelada mtzDesativada time life_atual 
+               printOneLostLife
+               putStrLn "\nVocê perdeu uma vida por tentar desarmar uma posição sem bomba, duas restantes."
+               actions quantLinhas quantColunas quantBombsLetais mtzInterna mtzUsuario matrizUsuarioRevelada mtzDesativada time lifeActual  
     
     -- Quando o usuário selecionar a opção de Sair do jogo               
     else if(acao == "Sair") then do
@@ -285,7 +292,7 @@ actions quantLinhas quantColunas quantBombsLetais mtzInterna mtzUsuario mtzAnter
         putStrLn "Opcão inválida"
         actions quantLinhas quantColunas quantBombsLetais mtzInterna mtzUsuario matrizUsuarioRevelada mtzDesativada time life 
         
-      
+        
 createMatriz :: Int -> Int -> Int -> Matriz
 createMatriz a b c = [((x,y), c) | x <-[1,2..a], y <-[1,2..b]]
 
@@ -396,8 +403,6 @@ startGame = do
     -- Bombas Letais
     let quantBombsLetais = 8
     
-    putStrLn"\n"
-    
     --Função para fazer o random das posições das bombas
     g <- newStdGen
     let (a,b) = randomR (1,999999 :: Int) g
@@ -433,6 +438,13 @@ startGame = do
     let matrizInicial = (createMatriz quantLinhas quantColunas (-2))
     
     let matrizDesativada = (createMatriz quantLinhas quantColunas (-4))
+    
+    putStrLn "\n"
+    
+    --Imprime na tela a vida inicial
+    printFullLife
+    
+    putStrLn "\n"
     
     printMatriz quantLinhas quantColunas matrizInicial
     
