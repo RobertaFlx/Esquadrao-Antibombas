@@ -73,15 +73,6 @@ printLostOneLifeR = do
     putStrLn "|__________________________________________|"
     
        
-    
--- Função que retorna true se a posição indicada for uma bomba letal
-checkPositionIsLetalBomb :: (Int, Int) -> Matriz -> Bool
-checkPositionIsLetalBomb tupla [] = False
-checkPositionIsLetalBomb (x, y) (((a, b), c): mtzTail) = 
-    if (x == a && y == b && c == -1) then 
-        True 
-    else 
-        checkPositionIsLetalBomb (x, y) mtzTail 
 
 -- Função que retorna true se a posição indicada já tenha sido revelada nas jogadas anteriores
 checkPositionIsRevealed :: (Int, Int) -> Matriz -> Bool
@@ -91,7 +82,16 @@ checkPositionIsRevealed (x, y) (((a, b), c): mtzTail) =
         True
     else 
         checkPositionIsRevealed (x, y) mtzTail 
-                
+        
+-- Função que retorna true se a posição indicada for uma bomba letal
+checkPositionIsLetalBomb :: (Int, Int) -> Matriz -> Bool
+checkPositionIsLetalBomb tupla [] = False
+checkPositionIsLetalBomb (x, y) (((a, b), c): mtzTail) = 
+    if (x == a && y == b && c == -1) then 
+        True 
+    else 
+        checkPositionIsLetalBomb (x, y) mtzTail   
+                      
 -- Função que retorna true se a posição indicada for uma bomba desarmável 
 checkPositionIsBomb :: (Int, Int) -> Matriz -> Bool
 checkPositionIsBomb tupla [] = False
@@ -101,6 +101,14 @@ checkPositionIsBomb (x, y) (((a, b), c): mtzTail) =
     else 
         checkPositionIsBomb (x, y) mtzTail 
         
+
+-- Função que modifica a matriz do usuário de acordo com as coordenadas recebidas
+modifyPosition :: Int -> Int -> Int -> Matriz -> Matriz -> Matriz 
+modifyPosition x y z (((a,b), c): mtzUsuario) mtzFinal = 
+    if (x == a && y == b) then 
+        mtzFinal ++ (([((x, y), z)] ++ mtzUsuario)) 
+        else modifyPosition x y z mtzUsuario (mtzFinal ++ [((a,b), c)])
+
 -- Função que modifica a matriz que é mostrada ao usuário usando a matriz interna
 revealsMatriz :: Matriz -> Matriz -> Matriz -> Matriz
 revealsMatriz [] mtzInterna mtzUsuario = mtzUsuario
@@ -111,13 +119,6 @@ modifyMatriz x y (((a,b), c): mtz) mtz_usuario =
     if (x == a && y == b) then 
         ((modifyPosition x y c mtz_usuario [])) 
         else modifyMatriz x y mtz mtz_usuario
-
--- Função que modifica a matriz do usuário de acordo com as coordenadas recebidas
-modifyPosition :: Int -> Int -> Int -> Matriz -> Matriz -> Matriz 
-modifyPosition x y z (((a,b), c): mtzUsuario) mtzFinal = 
-    if (x == a && y == b) then 
-        mtzFinal ++ (([((x, y), z)] ++ mtzUsuario)) 
-        else modifyPosition x y z mtzUsuario (mtzFinal ++ [((a,b), c)])
         
 revealing :: Int -> Int -> Matriz -> Matriz -> Matriz -> Matriz
 revealing quantLinhas quantColunas [] mtzUsuario mtzInterna = mtzUsuario
@@ -129,6 +130,19 @@ revealing quantLinhas quantColunas (((x, y), z):mtzUsuarioTail) mtzUsuario mtzIn
             revealing quantLinhas quantColunas mtzUsuarioTail mtzUsuario mtzInterna
         else
             revealing quantLinhas quantColunas (revealedCross x y quantLinhas quantColunas mtzUsuario mtzInterna) (revealedCross x y quantLinhas quantColunas mtzUsuario mtzInterna) mtzInterna
+
+ 
+revealedCross :: Int -> Int -> Int -> Int -> Matriz -> Matriz -> Matriz
+revealedCross x y quantLinhas quantColunas mtzUsuario mtzInterna
+    | (x == 1 &&  y == 1) = modifyMatriz (x+1) y mtzInterna (modifyMatriz x (y+1) mtzInterna mtzUsuario)
+    | (x == 1 && y == quantColunas) = modifyMatriz (x+1) y mtzInterna (modifyMatriz x (y-1) mtzInterna mtzUsuario)
+    | (x == quantLinhas && y == quantColunas) = modifyMatriz (x-1) y mtzInterna (modifyMatriz x (y-1) mtzInterna mtzUsuario)
+    | (x == quantLinhas && y==1) = modifyMatriz (x-1) y mtzInterna (modifyMatriz x (y+1) mtzInterna mtzUsuario)
+    | (x==1 && y > 1 && y < quantColunas) = modifyMatriz (x+1) y mtzInterna (modifyMatriz x (y-1) mtzInterna (modifyMatriz x (y+1) mtzInterna mtzUsuario))
+    | (x>1 && x < quantLinhas && y==quantColunas) = modifyMatriz (x-1) y mtzInterna (modifyMatriz (x+1) (y) mtzInterna (modifyMatriz x (y-1) mtzInterna mtzUsuario))
+    | (x== quantLinhas && y > 1 && y < quantColunas) = modifyMatriz (x-1) y mtzInterna (modifyMatriz x (y-1) mtzInterna (modifyMatriz x (y+1) mtzInterna mtzUsuario))
+    | (x>1 && x<quantLinhas && y==1) = modifyMatriz x (y+1) mtzInterna (modifyMatriz (x-1) y mtzInterna (modifyMatriz (x+1) y mtzInterna mtzUsuario))
+    | otherwise = modifyMatriz (x-1) y mtzInterna (modifyMatriz (x) (y+1) mtzInterna (modifyMatriz (x+1) (y) mtzInterna (modifyMatriz x (y-1) mtzInterna  mtzUsuario)))            
 
 revealedAround :: Int -> Int -> Int -> Int -> Matriz -> Bool
 revealedAround x y quantLinhas quantColunas mtzUsuario
@@ -147,18 +161,6 @@ revealed x y (((a,b),v):mtzTail) =
     if (a==x && b==y) then 
         (v/=(-2)) 
         else (revealed x y mtzTail) 
- 
-revealedCross :: Int -> Int -> Int -> Int -> Matriz -> Matriz -> Matriz
-revealedCross x y quantLinhas quantColunas mtzUsuario mtzInterna
-    | (x == 1 &&  y == 1) = modifyMatriz (x+1) y mtzInterna (modifyMatriz x (y+1) mtzInterna mtzUsuario)
-    | (x == 1 && y == quantColunas) = modifyMatriz (x+1) y mtzInterna (modifyMatriz x (y-1) mtzInterna mtzUsuario)
-    | (x == quantLinhas && y == quantColunas) = modifyMatriz (x-1) y mtzInterna (modifyMatriz x (y-1) mtzInterna mtzUsuario)
-    | (x == quantLinhas && y==1) = modifyMatriz (x-1) y mtzInterna (modifyMatriz x (y+1) mtzInterna mtzUsuario)
-    | (x==1 && y > 1 && y < quantColunas) = modifyMatriz (x+1) y mtzInterna (modifyMatriz x (y-1) mtzInterna (modifyMatriz x (y+1) mtzInterna mtzUsuario))
-    | (x>1 && x < quantLinhas && y==quantColunas) = modifyMatriz (x-1) y mtzInterna (modifyMatriz (x+1) (y) mtzInterna (modifyMatriz x (y-1) mtzInterna mtzUsuario))
-    | (x== quantLinhas && y > 1 && y < quantColunas) = modifyMatriz (x-1) y mtzInterna (modifyMatriz x (y-1) mtzInterna (modifyMatriz x (y+1) mtzInterna mtzUsuario))
-    | (x>1 && x<quantLinhas && y==1) = modifyMatriz x (y+1) mtzInterna (modifyMatriz (x-1) y mtzInterna (modifyMatriz (x+1) y mtzInterna mtzUsuario))
-    | otherwise = modifyMatriz (x-1) y mtzInterna (modifyMatriz (x) (y+1) mtzInterna (modifyMatriz (x+1) (y) mtzInterna (modifyMatriz x (y-1) mtzInterna  mtzUsuario)))            
             
 -- Função para contar quantas posições ainda estão escondidas   
 hiddenAccount :: Int -> Matriz -> Int
@@ -168,6 +170,14 @@ hiddenAccount num (((x, y), v) : mtz) =
         (hiddenAccount (num+1) mtz) 
         else (hiddenAccount (num) mtz)
 
+-- Função para contar quantas bombas ainda estão armadas  
+bombsAccount :: Int -> Matriz -> Int
+bombsAccount num [] = num
+bombsAccount num (((x, y), v) : mtz) = 
+    if (v == -3) then
+        (bombsAccount (num+1) mtz) 
+        else (bombsAccount (num) mtz)
+        
 actions :: Int -> Int -> Int -> Matriz -> Matriz -> Matriz ->  Matriz -> UTCTime ->Int -> IO()
 actions quantLinhas quantColunas quantBombsLetais mtzInterna mtzUsuario mtzAnteriorRevelada mtzDesativada time life = do
 
@@ -192,6 +202,9 @@ actions quantLinhas quantColunas quantBombsLetais mtzInterna mtzUsuario mtzAnter
     let matrizUsuarioRevelada = revealing quantLinhas quantColunas matrizUsuario matrizUsuario mtzInterna
     let matrizInternaRevelada = revealsMatriz mtzInterna mtzInterna mtzUsuario
     let mtzUsuarioDesativada = modifyMatriz x y mtzDesativada matrizUsuarioRevelada
+    
+    -- Verifica quantas bombas precisam ser desarmadas
+    let quantidades_bombs = bombsAccount 0 mtzUsuarioDesativada
     
     -- Se for maior que 480 segundos de diferença o jogador perde, por causa do tempo esgotado
     if(diferenca >= 480.00) then do
@@ -220,11 +233,15 @@ actions quantLinhas quantColunas quantBombsLetais mtzInterna mtzUsuario mtzAnter
                exitSuccess
             else do
                actions quantLinhas quantColunas quantBombsLetais mtzInterna mtzUsuario matrizUsuarioRevelada mtzDesativada time life_atual 
-        	
+                
         else if (hiddenAccount 0 matrizUsuarioRevelada == quantBombsLetais) then do --Adicionar também como condição para ganhar, a contagem e verificação das bombas desarmadas
-            printWin 
-            exitSuccess
-
+            
+            if (quantidades_bombs == 0) then do
+               printWin 
+               exitSuccess
+            else do
+               actions quantLinhas quantColunas quantBombsLetais mtzInterna matrizUsuario matrizUsuarioRevelada mtzDesativada time life
+        	
         else do
             actions quantLinhas quantColunas quantBombsLetais mtzInterna matrizUsuario matrizUsuarioRevelada mtzDesativada time life
               
@@ -234,9 +251,17 @@ actions quantLinhas quantColunas quantBombsLetais mtzInterna mtzUsuario mtzAnter
             printMatriz quantLinhas quantColunas (matrizInternaRevelada) 
             printLose
             exitSuccess
+        
         else if(checkPositionIsBomb (x, y) mtzInterna) then do
             printMatriz quantLinhas quantColunas (mtzUsuarioDesativada) 
-            actions quantLinhas quantColunas quantBombsLetais mtzInterna mtzUsuarioDesativada matrizUsuarioRevelada mtzDesativada time life
+            if (hiddenAccount 0 matrizUsuarioRevelada == quantBombsLetais ) then do 
+                if (quantidades_bombs == 0) then do
+                    printWin 
+                    exitSuccess
+                else do
+                    actions quantLinhas quantColunas quantBombsLetais mtzInterna mtzUsuarioDesativada matrizUsuarioRevelada mtzDesativada time life
+            else do
+                actions quantLinhas quantColunas quantBombsLetais mtzInterna mtzUsuarioDesativada matrizUsuarioRevelada mtzDesativada time life            
         else do
             printMatriz quantLinhas quantColunas (matrizUsuarioRevelada)
             --putStrLn "\nVocê perdeu uma vida por tentar desarmar uma posição sem bomba."
@@ -417,7 +442,7 @@ startGame = do
     -- Define a quantidade de vidas disponíveis para o usuário
     let life = 3
     
-    --Chama função relacionada a jogada do usuário com o time
+    --Chama função relacionada a jogada do usuário com o time e a vida
     actions quantLinhas quantColunas quantBombsLetais matrizCompleta matrizInicial matrizInicial matrizDesativada time life 
 
 main :: IO()
