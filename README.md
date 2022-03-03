@@ -25,5 +25,5 @@ runhaskell Main.hs
 ## Simulação
 
 <p align="center">
-  <img width="460" height="300" src="assets/simulacao.gif">
+  <img width="650" src="assets/simulacao.gif">
 </p>
