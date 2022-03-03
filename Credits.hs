@@ -14,8 +14,8 @@ texto = [
     "|   Integrantes do Grupo:                                                        |", 
     "|                                                                                |",
     "|   >>> Adísio Pereira Fialho Júnior                                             |",
-    "|   >>> Roberta Felix da Silva                                                   |",
     "|   >>> Sonaly Katly Garcia Nunes                                                |",
+    "|   >>> Roberta Felix da Silva                                                   |",
     "|________________________________________________________________________________|"]
 
 menu :: [[Char]]

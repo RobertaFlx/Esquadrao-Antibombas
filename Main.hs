@@ -34,6 +34,12 @@ commandsTable = [
     " s / w - mover cursor  ", 
     " f - selecionar        "]
 
+
+printArrow :: [[Char]] -> Int -> [[Char]]
+printArrow [] _ = []
+printArrow (row:rest) 0     = (" " ++ row ++ " <<<") : rest
+printArrow (row:rest) i     = row : printArrow rest (pred i)
+
 -- Cria o menu e imprime ele na tela
 printMenu :: [[Char]] -> IO()
 printMenu menuTab = do
@@ -47,13 +53,6 @@ printMenu menuTab = do
     let tmp4 = Scr.renderCentralized tmp3 titleBuf 0 (-4)
 
     Scr.printScreen tmp4
-
-
-printArrow :: [[Char]] -> Int -> [[Char]]
-printArrow [] _ = []
-printArrow (row:rest) 0     = (" " ++ row ++ " <<<") : rest
-printArrow (row:rest) i     = row : printArrow rest (pred i)
-
 
 mainLoop :: Int -> IO()
 mainLoop index = do

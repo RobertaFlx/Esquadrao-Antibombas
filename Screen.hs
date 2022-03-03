@@ -31,20 +31,6 @@ createScreenBuffer w h c = createScreenBufferColored w h c
 createScreenBufferColored :: Int -> Int -> [Char] -> [[IPixel]]
 createScreenBufferColored w h c = replicate h $ replicate w $ (Pixel c)
 
--- largura de um buffer, maior largura entre todas as linhas
-bufferWidth :: [[IPixel]] -> Int
-bufferWidth buffer = maximum $ map length buffer
-
-bufferHeight :: [[IPixel]] -> Int
-bufferHeight buffer = length buffer
-
--- imprime um buffer no centro de outro com um deslocamento
-renderCentralized :: [[IPixel]] -> [[IPixel]] -> Int -> Int -> [[IPixel]]
-renderCentralized buffer source offsetX offsetY = do
-    let x = (bufferWidth buffer) `div` 2 - (bufferWidth source) `div` 2 + offsetX
-    let y = (bufferHeight buffer) `div` 2 - (bufferHeight source) `div` 2 + offsetY
-    renderInBuffer buffer source x y
-
 -- imprime buffer no buffer
 renderInBuffer :: [[IPixel]] -> [[IPixel]] -> Int -> Int -> [[IPixel]]
 renderInBuffer buffer source x y
@@ -68,6 +54,20 @@ renderInBufferRow target source i
           targetTail = tail target
           sourceFirst = head source
           sourceTail = tail source
+
+-- largura de um buffer, maior largura entre todas as linhas
+bufferWidth :: [[IPixel]] -> Int
+bufferWidth buffer = maximum $ map length buffer
+
+bufferHeight :: [[IPixel]] -> Int
+bufferHeight buffer = length buffer
+
+-- imprime um buffer no centro de outro com um deslocamento
+renderCentralized :: [[IPixel]] -> [[IPixel]] -> Int -> Int -> [[IPixel]]
+renderCentralized buffer source offsetX offsetY = do
+    let x = (bufferWidth buffer) `div` 2 - (bufferWidth source) `div` 2 + offsetX
+    let y = (bufferHeight buffer) `div` 2 - (bufferHeight source) `div` 2 + offsetY
+    renderInBuffer buffer source x y
 
 -- converte string em buffer
 stringToBuffer :: [Char] -> Int -> [IPixel]
