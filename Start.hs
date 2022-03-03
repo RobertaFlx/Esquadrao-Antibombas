@@ -84,13 +84,13 @@ checkPositionIsRevealed (x, y) (((a, b), c): mtzTail) =
         checkPositionIsRevealed (x, y) mtzTail 
         
 -- Função que retorna true se a posição indicada for uma bomba letal
-checkPositionIsLetalBomb :: (Int, Int) -> Matriz -> Bool
-checkPositionIsLetalBomb tupla [] = False
-checkPositionIsLetalBomb (x, y) (((a, b), c): mtzTail) = 
+checkPositionIsLethalBomb :: (Int, Int) -> Matriz -> Bool
+checkPositionIsLethalBomb tupla [] = False
+checkPositionIsLethalBomb (x, y) (((a, b), c): mtzTail) = 
     if (x == a && y == b && c == -1) then 
         True 
     else 
-        checkPositionIsLetalBomb (x, y) mtzTail   
+        checkPositionIsLethalBomb (x, y) mtzTail    
                       
 -- Função que retorna true se a posição indicada for uma bomba desarmável 
 checkPositionIsBomb :: (Int, Int) -> Matriz -> Bool
@@ -107,7 +107,7 @@ modifyPosition :: Int -> Int -> Int -> Matriz -> Matriz -> Matriz
 modifyPosition x y z (((a,b), c): mtzUsuario) mtzFinal = 
     if (x == a && y == b) then 
         mtzFinal ++ (([((x, y), z)] ++ mtzUsuario)) 
-        else modifyPosition x y z mtzUsuario (mtzFinal ++ [((a,b), c)])
+    else modifyPosition x y z mtzUsuario (mtzFinal ++ [((a,b), c)])
 
 -- Função que modifica a matriz que é mostrada ao usuário usando a matriz interna
 revealsMatriz :: Matriz -> Matriz -> Matriz -> Matriz
@@ -118,7 +118,7 @@ modifyMatriz :: Int -> Int -> Matriz -> Matriz -> Matriz
 modifyMatriz x y (((a,b), c): mtz) mtz_usuario = 
     if (x == a && y == b) then 
         ((modifyPosition x y c mtz_usuario [])) 
-        else modifyMatriz x y mtz mtz_usuario
+    else modifyMatriz x y mtz mtz_usuario
         
 revealing :: Int -> Int -> Matriz -> Matriz -> Matriz -> Matriz
 revealing quantLinhas quantColunas [] mtzUsuario mtzInterna = mtzUsuario
@@ -160,7 +160,7 @@ revealed :: Int -> Int -> Matriz -> Bool
 revealed x y (((a,b),v):mtzTail) = 
     if (a==x && b==y) then 
         (v/=(-2)) 
-        else (revealed x y mtzTail) 
+    else (revealed x y mtzTail) 
             
 -- Função para contar quantas posições ainda estão escondidas   
 hiddenAccount :: Int -> Matriz -> Int
@@ -168,7 +168,7 @@ hiddenAccount num [] = num
 hiddenAccount num (((x, y), v) : mtz) = 
     if (v == -2) then
         (hiddenAccount (num+1) mtz) 
-        else (hiddenAccount (num) mtz)
+    else (hiddenAccount (num) mtz)
 
 -- Função para contar quantas bombas ainda estão armadas  
 bombsAccount :: Int -> Matriz -> Int
@@ -176,23 +176,23 @@ bombsAccount num [] = num
 bombsAccount num (((x, y), v) : mtz) = 
     if (v == -3) then
         (bombsAccount (num+1) mtz) 
-        else (bombsAccount (num) mtz)
+    else (bombsAccount (num) mtz)
 
 -- Função para contar quantas bombas letais o código contém 
-bombsAlertAccount :: Int -> Matriz -> Int
-bombsAlertAccount num [] = num
-bombsAlertAccount num (((x, y), v) : mtz) = 
+alertsAccount :: Int -> Matriz -> Int
+alertsAccount num [] = num
+alertsAccount num (((x, y), v) : mtz) = 
     if (v == -5) then
-        (bombsAlertAccount (num+1) mtz) 
-        else (bombsAlertAccount (num) mtz)
+        (alertsAccount (num+1) mtz) 
+    else (alertsAccount (num) mtz) 
         
 -- Função para contar quantas bombas letais o código contém 
-bombsLethalAccount :: Int -> Matriz -> Int
-bombsLethalAccount num [] = num
-bombsLethalAccount num (((x, y), v) : mtz) = 
+lethalBombsAccount :: Int -> Matriz -> Int
+lethalBombsAccount num [] = num
+lethalBombsAccount num (((x, y), v) : mtz) = 
     if (v == -1) then
-        (bombsLethalAccount (num+1) mtz) 
-        else (bombsLethalAccount (num) mtz)
+        (lethalBombsAccount (num+1) mtz) 
+    else (lethalBombsAccount (num) mtz) 
         
 actions :: Int -> Int -> Int -> Matriz -> Matriz -> Matriz ->  Matriz -> Matriz -> UTCTime ->Int -> Int -> IO()
 actions quantLinhas quantColunas quantBombsLetais mtzInterna mtzUsuario mtzAnteriorRevelada mtzDesativada mtzAlerta time life qt_alertas = do
@@ -221,14 +221,17 @@ actions quantLinhas quantColunas quantBombsLetais mtzInterna mtzUsuario mtzAnter
     let mtzUsuarioAlerta =  modifyMatriz x y mtzAlerta matrizUsuarioRevelada
     
     -- Responsáveis por fazer o controle da condição de ganhar 
-    let quant_bombs = bombsLethalAccount 0  matrizInternaRevelada
+    
+    -- OBS: Ajeitar o nome desses atributos para melhor entendimento, explicar para o que cada atributo desse serve, padronizar e tirar esses _, substituir por um nome seguido de letra maiuscula, como por exemplo quantBombs.
+    
+    let quant_bombs = lethalBombsAccount 0  matrizInternaRevelada
     let quant_bomb_alerta =  quant_bombs + qt_alertas
     
     -- Verifica quantas bombas precisam ser desarmadas
     let quantBombasAtivadas = bombsAccount 0 mtzUsuarioDesativada
     
-    -- Se for maior que 480 segundos de diferença o jogador perde, por causa do tempo esgotado
-    if(diferenca >= 480.00) then do
+    -- Se for maior que 540 segundos de diferença o jogador perde, por causa do tempo esgotado
+    if(diferenca >= 540.00) then do
         putStrLn "\nO tempo de jogo expirou."
     	printTimesUP
     	exitSuccess
@@ -236,7 +239,7 @@ actions quantLinhas quantColunas quantBombsLetais mtzInterna mtzUsuario mtzAnter
     -- Quando o usuário selecionar a opção de Abrir caminho
     else if(acao == "Abrir") then do
         printMatriz quantLinhas quantColunas (matrizUsuarioRevelada)
-        if(checkPositionIsLetalBomb (x, y) mtzInterna)  then do
+        if(checkPositionIsLethalBomb (x, y) mtzInterna)  then do         -- O usuário perde o jogo imediatamente após abrir caminho em uma bomba letal.
             printMatriz quantLinhas quantColunas (matrizInternaRevelada) 
             printLose
             exitSuccess
@@ -250,6 +253,8 @@ actions quantLinhas quantColunas quantBombsLetais mtzInterna mtzUsuario mtzAnter
                putStrLn "\nVocê perdeu uma vida por tentar abrir uma posição já revelada.\nVocê não possui vidas suficientes."
                printLose
                exitSuccess
+               
+            -- Informa ao usuário que perdeu uma vida, e retorna quantas ainda tem.
             else if (lifeActual == 1) then do
                printTwoLostLife
                putStrLn "\nVocê perdeu uma vida por tentar abrir uma posição já revelada, uma restante."
@@ -271,28 +276,31 @@ actions quantLinhas quantColunas quantBombsLetais mtzInterna mtzUsuario mtzAnter
     
     -- Quando o usuário selecionar a opção de Alertar Caminho
     else if(acao == "Alerta") then do
-        printMatriz quantLinhas quantColunas (mtzUsuarioAlerta)
-        if (checkPositionIsRevealed(x,y) mtzAnteriorRevelada) then do
-            putStrLn "\nVocê perdeu uma vida por alertar uma posição já revelada"
-            actions quantLinhas quantColunas quantBombsLetais mtzInterna mtzUsuarioAlerta matrizUsuarioRevelada mtzDesativada mtzAlerta time life qt_alertas
-        else if (checkPositionIsLetalBomb (x, y) mtzInterna) then do
+        if (checkPositionIsRevealed(x,y) mtzAnteriorRevelada) then do   -- A opção de tentar marcar um alerta em uma posição que já foi revelada, é inválida.
+            putStrLn "Opcão inválida\n"
+            printMatriz quantLinhas quantColunas (matrizUsuarioRevelada)
+            actions quantLinhas quantColunas quantBombsLetais mtzInterna mtzUsuario matrizUsuarioRevelada mtzDesativada mtzAlerta time life qt_alertas
+            
+        else if (checkPositionIsLethalBomb (x, y) mtzInterna) then do -- OBS: Explicar o que essa condição faz
+            printMatriz quantLinhas quantColunas (mtzUsuarioAlerta)
             let quantidade_alertas = qt_alertas - 1
             actions quantLinhas quantColunas quantBombsLetais mtzInterna mtzUsuarioAlerta matrizUsuarioRevelada mtzDesativada mtzAlerta time life quantidade_alertas
             
         else do
+            printMatriz quantLinhas quantColunas (mtzUsuarioAlerta)
             actions quantLinhas quantColunas quantBombsLetais mtzInterna mtzUsuarioAlerta matrizUsuarioRevelada mtzDesativada mtzAlerta time life qt_alertas 
             
                 
     -- Quando o usuário selecionar a opção de Desativar bomba          
     else if(acao == "Desativar") then do
-        if(checkPositionIsLetalBomb (x, y) mtzInterna) then do 
+        if(checkPositionIsLethalBomb (x, y) mtzInterna) then do -- O usuário perde o jogo imediatamente após desativar uma bomba letal.
             printMatriz quantLinhas quantColunas (matrizInternaRevelada) 
             printLose
             exitSuccess
         
         else if(checkPositionIsBomb (x, y) mtzInterna) then do
             printMatriz quantLinhas quantColunas (mtzUsuarioDesativada) 
-            if (hiddenAccount 0 matrizUsuarioRevelada == quant_bomb_alerta) then do 
+            if (hiddenAccount 0 matrizUsuarioRevelada == quant_bomb_alerta) then do --OBS: muitos if's e else's juntos, tentar limpar o código.
                 if (quantBombasAtivadas == 0) then do
                     printWin 
                     exitSuccess
@@ -309,6 +317,8 @@ actions quantLinhas quantColunas quantBombsLetais mtzInterna mtzUsuario mtzAnter
                putStrLn "\nVocê perdeu uma vida por tentar desarmar uma posição sem bomba.\nVocê não possui vidas suficientes."
                printLose
                exitSuccess
+            
+            -- Informa ao usuário que perdeu uma vida, e retorna quantas ainda tem.
             else if (lifeActual == 1) then do
                printTwoLostLife
                putStrLn "\nVocê perdeu uma vida por tentar desarmar uma posição sem bomba, uma restante."
@@ -322,10 +332,9 @@ actions quantLinhas quantColunas quantBombsLetais mtzInterna mtzUsuario mtzAnter
     else if(acao == "Sair") then do
         exitSuccess
         
-    -- Tratamento de entradas inválidas
+    -- Uma entrada inválida vai resultar no término do jogo
     else do
-        putStrLn "Opcão inválida"
-        actions quantLinhas quantColunas quantBombsLetais mtzInterna mtzUsuario matrizUsuarioRevelada mtzDesativada mtzAlerta time life qt_alertas
+        exitSuccess
         
         
 createMatriz :: Int -> Int -> Int -> Matriz
@@ -349,7 +358,8 @@ generateRandomNumber num random =
         (((random * 20) `mod` num) + 1)
     else
         (((random * 43) `mod` num) + 1)  
-    
+ 
+-- Adiciona bombas desarmáveis 
 addBombs :: [(Int, Int)] -> Matriz -> Matriz
 addBombs [] mtz = mtz
 addBombs ((x, y): mtzTail) mtz = addBombs mtzTail (insertBomb x y mtz [])  
@@ -409,7 +419,8 @@ getValuesMatriz :: Int -> Int -> Int -> Matriz -> String
 getValuesMatriz linha quantLinhas quantColunas matriz
     | linha == (quantLinhas+1) = ""
     | otherwise = convertIntToString (getValuesLine linha quantColunas matriz) ++ "\n" ++ getValuesMatriz (linha+1) quantLinhas quantColunas matriz
-    
+
+-- Função para converter a matriz interna de números inteiros para uma saída em String
 convertIntToString :: [Int] -> String
 convertIntToString [] = ""
 convertIntToString (h:t) 
