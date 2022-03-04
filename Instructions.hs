@@ -30,7 +30,7 @@ texto = [
     "|       pela letra A. Após um Alerta ser marcado ele não pode ser desmarcado.                                                   |",                                                                                                   
     "|                                                                                                                               |",
     "|   >>> O jogador deve escrever a ação da jogada que quer fazer(Abrir, Desativar, Alerta), e em seguida indicar a posição       |",
-    "|       da coluna e da linha, respectivamente.                                                                                  |",  
+    "|       da linha e da coluna, respectivamente.                                                                                  |",  
     "|                                                                                                                               |",
     "|   >>> Para ganhar, o jogador deve desativar as Bombas B e revelar todos as posições sem bomba.                                |",                                                                                                          
     "|_______________________________________________________________________________________________________________________________|"]
