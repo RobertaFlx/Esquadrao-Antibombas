@@ -8,16 +8,16 @@ Componentes:
 
 ## Running
 
-Instale e atualize o utilitário caball para poder rodar os diretórios do projeto.
+Instale e atualize o utilitário cabal para poder rodar os diretórios do projeto.
 
 ```
-sudo apt install caball-install
+sudo apt install cabal-install
 cabal update
 cabal install random
 ```
 
 
-Então compile o código e execute o programa.
+Então entre no repositório do projeto e use o seguinte comando para executar o programa:
 
 ```
 runhaskell Main.hs
