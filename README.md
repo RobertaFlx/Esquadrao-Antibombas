@@ -6,7 +6,7 @@ Componentes:
 - Sonaly Katly Garcia Nunes 
 - Roberta Felix da Silva
 
-## Running
+## Running para o projeto em Haskell
 
 Instale e atualize o utilitário cabal para poder rodar os diretórios do projeto.
 
@@ -17,10 +17,23 @@ cabal install random
 ```
 
 
-Então entre no repositório do projeto e use o seguinte comando para executar o programa:
+Então entre no repositório do projeto na pasta haskel e use o seguinte comando para executar o programa:
 
 ```
 runhaskell Main.hs
+```
+
+## Running para o projeto em Prolog
+
+Instale depedência do prolog.
+
+```
+sudo apt install swi-prolog-nox
+```
+Então entre no repositório do projeto na pasta prolog e use o seguinte comando para executar o programa:
+
+```
+swipl -q -f Main.pl
 ```
 ## Simulação
 
