@@ -4,10 +4,11 @@ startGame(QuantLinhas,QuantColunas,QuantBombasLetais) :-
     writeln(''),
 	matrizGenerate(QuantColunas, QuantLinhas, QuantBombasLetais, Matriz),
 	!,
-	start(Matriz),
+	get_time(Time),
+	start(Matriz,Time),
 	!.
 
-start(Matriz) :- % jogador ganhou
+start(Matriz,Time) :- % jogador ganhou
 	traversesMatriz(win, Matriz),
 	traversesMatriz(printMatriz, Matriz),
 	writeln('
@@ -18,7 +19,7 @@ start(Matriz) :- % jogador ganhou
 |         ▀▀▀ ▀ ▀ ▀  ▀ ▀ ▀ ▀▀▀  ▀▀         |
 |__________________________________________|'),halt.
 
-start(Matriz) :- % jogador perdeu
+start(Matriz,Time) :- % jogador perdeu
 	\+ traversesMatriz(playing, Matriz),
 	traversesMatriz(printMatriz, Matriz),
 	writeln('
@@ -29,16 +30,34 @@ start(Matriz) :- % jogador perdeu
 |         ▀   ▀▀▀ ▀ ▀ ▀▀  ▀▀▀  ▀▀          |
 |__________________________________________|'),halt.
 
-start(Matriz) :- % jogador nem ganhou nem perdeu
+start(Matriz,Time) :- % jogador nem ganhou nem perdeu
 	traversesMatriz(printMatriz, Matriz),
 	writeln(''),
 	writeln('Informe sua Jogada:'),
 	getMove(Jogada, X, Y),
 	writeln(''),
+	get_time(TimeAtual),
+	TimeDif is TimeAtual - Time,
+	continua(TimeDif),
+	writeln(''),
 	actions(Jogada, coordenada(X,Y), Matriz, MatrizRevelada),
 	!,
-	start(MatrizRevelada).
+	start(MatrizRevelada,Time).
 
+continua(TimeDif):-
+	 (TimeDif >= 60,writeln( "
+      __________________________________________ 
+     |                                          |
+     |          ▀█▀ █▀▀ █▀▄▀█ █▀█ █▀█           |
+     |           █  █▀  █ █ █ █▀▀ █ █           |
+     |           ▀  ▀▀▀ ▀ ▀ ▀ ▀   ▀▀▀           |
+     |                                          |
+     |     █▀▀ █▀▀ █▀▀ █▀█ ▀█▀ █▀█ █▀▄ █▀█      |
+     |     █▀  ▀▀█ █ ▄ █ █  █  █▀█ █ █ █ █      |
+     |     ▀▀▀ ▀▀▀ ▀▀▀ ▀▀▀  ▀  ▀ ▀ ▀▀  ▀▀▀      |
+     |__________________________________________|"),halt; 
+	  TimeDif <60).
+	 
 % Cria uma nova matriz que será o campo.
 matrizGenerate(QuantLinhas, QuantColunas, QuantBombasLetais, campo(QuantLinhas,QuantColunas,PosicoesMapeadas)) :-
 	% gera uma lista
@@ -67,9 +86,10 @@ getMove(Jogada, X, Y) :-
 	maplist(char_code, InChars, In),
 	phrase(typeMove(Jogada, Y, X), InChars, []). 
 
+
 % Identifica tipo de jogada feita.
-typeMove(alerta, X, Y) --> ['A'], [' '], coords(X, Y).
-typeMove(revela, X, Y) --> ['R'], [' '], coords(X, Y).
+typeMove(alerta, X, Y) --> ['A','l','e','r','t','a'], [' '], coords(X, Y).
+typeMove(revela, X, Y) --> ['A','b','r','i','r'], [' '], coords(X, Y).
 coords(Xi, Yi) --> number_(X), { number_chars(Xi, X) }, [' '], number_(Y), { number_chars(Yi, Y) }.
 
 number_([D|T]) --> digit(D), number_(T).
