@@ -29,23 +29,9 @@ start(Matriz,Time) :- % jogador perdeu
 |         █▀▀ █▀  █▀▄ █ █ █▀  █ █          |
 |         ▀   ▀▀▀ ▀ ▀ ▀▀  ▀▀▀  ▀▀          |
 |__________________________________________|'),halt.
-
-start(Matriz,Time) :- % jogador nem ganhou nem perdeu
-	traversesMatriz(printMatriz, Matriz),
-	writeln(''),
-	writeln('Informe sua Jogada:'),
-	getMove(Jogada, X, Y),
-	writeln(''),
-	get_time(TimeAtual),
-	TimeDif is TimeAtual - Time,
-	continua(TimeDif),
-	writeln(''),
-	actions(Jogada, coordenada(X,Y), Matriz, MatrizRevelada),
-	!,
-	start(MatrizRevelada,Time).
-
+	  
 continua(TimeDif):-
-	 (TimeDif >= 60,writeln( "
+	 (TimeDif >= 540,writeln( "
       __________________________________________ 
      |                                          |
      |          ▀█▀ █▀▀ █▀▄▀█ █▀█ █▀█           |
@@ -57,24 +43,48 @@ continua(TimeDif):-
      |     ▀▀▀ ▀▀▀ ▀▀▀ ▀▀▀  ▀  ▀ ▀ ▀▀  ▀▀▀      |
      |__________________________________________|"),halt; 
 	  TimeDif <60).
-	 
+	  
+start(Matriz,Time) :- % jogador nem ganhou nem perdeu
+	traversesMatriz(printMatriz, Matriz),
+	writeln(''),
+	writeln('Informe sua Jogada:'),
+	getMove(Jogada, X, Y),
+	writeln(''),
+	get_time(TimeAtual),
+	TimeDif is TimeAtual - Time,
+	continua(TimeDif),
+	writeln(''),
+	writeln(Matriz),
+	actions(Jogada, coordenada(X,Y), Matriz, MatrizRevelada),
+	!,
+	start(MatrizRevelada,Time).
+
+
 % Cria uma nova matriz que será o campo.
 matrizGenerate(QuantLinhas, QuantColunas, QuantBombasLetais, campo(QuantLinhas,QuantColunas,PosicoesMapeadas)) :-
 	% gera uma lista
 	TotalPosicoes is QuantLinhas * QuantColunas,
 	length(Posicoes, TotalPosicoes),
 
-	length(ListaDeLetais, QuantBombasLetais),
-	maplist(=('L'), ListaDeLetais), 
+	length(ListaDeLetais, 4),
+	maplist(=('B'), ListaDeLetais), 
+	
+	length(ListaBombasLetais, QuantBombasLetais),
+	maplist(=('L'), ListaBombasLetais), 
+	
+	% Une as duas listas em uma só
+	append(ListaDeLetais,ListaBombasLetais, ListaBombasJuntas),
 
 	% concatena a lista de bombas com a lista original
-	addBombsLetais(Posicoes, ListaDeLetais, ListaComLetais), 
+	addBombsLetais(Posicoes, ListaBombasJuntas, ListaComLetais), 
 
 	% Permuta a lista, colocando as bombas letais em posições aleatórias.
 	random_permutation(ListaComLetais, ListaPermutada), 
 	
 	% converte a lista inicial para uma matriz
 	generateMatriz(ListaPermutada, QuantLinhas, QuantColunas, MatrizFinal),
+	
+	writeln(MatrizFinal),
 
 	traversesMatriz(countAdjacentLetais(campo(QuantLinhas,QuantColunas,MatrizFinal)),
 	campo(QuantLinhas,QuantColunas,MatrizFinal), 
@@ -134,9 +144,11 @@ generateLines([H|T], QuantLinhas, [H|L], Resto) :-
 
 % calcula o valor de bombas letais adjacentes à cada posição. 
 countAdjacentLetais(_, _, _, Z, posicao('*',Z)) :- Z =@= 'L'.
+countAdjacentLetais(_, _, _, H, posicao('*',H)) :- H =@= 'B'.
 countAdjacentLetais(Matriz, coordenada(X,Y), D, Posicao, posicao('*',NumBombasLetais)) :-
-	dif(Posicao, 'L'),
+	dif(Posicao, 'L'), 
 	findall(coordenada(Ax,Ay), (
+		dif(Posicao, 'B'),
 		adjacentsPositions(coordenada(X,Y), D, coordenada(Ax,Ay)),
 		indomain(Ax), indomain(Ay),
 		getCoordenada(Matriz, coordenada(Ax,Ay), Val),
@@ -181,9 +193,10 @@ actions(revela, Posicao, Matriz, MatrizDerrota) :-
 % Jogada que abre caminho e releva posições seguras da matriz.
 actions(revela, Posicao, Matriz, MatrizRevelada) :-
 	getCoordenada(Matriz, Posicao, posicao(_,Z)),
-	dif(Z, 'L'),
+	dif(Z, 'L'), % dif(Z,'B'),
 	modifyMatriz(Matriz, Posicao, posicao(Z,Z), MatrizAlterada),
 	revealsMatriz(Posicao, MatrizAlterada, MatrizRevelada).
+	
 
 % revela recursivo
 revealsMatriz(coordenada(X,Y), campo(QuantLinhas,QuantColunas,Posicoes), MatrizRevelada) :-
@@ -201,11 +214,16 @@ revealing([QuantColunas|T], Matriz, MatrizRevelada) :-
 	member(X, [Y,'L']),
 	revealing(T, Matriz, MatrizRevelada).
 
-% se a posição for uma bomba, não revela nenhum outro campo.
+% se a posição for uma bomba letal, não revela nenhum outro campo.
 revealing([QuantColunas|T], Matriz, MatrizRevelada) :- 
 	getCoordenada(Matriz, QuantColunas, posicao(_,'L')),
 	revealing(T, Matriz, MatrizRevelada).
 
+% se a posição for uma bomba normal, não revela nenhum outro campo.
+revealing([QuantColunas|T], Matriz, MatrizRevelada) :- 
+	getCoordenada(Matriz, QuantColunas, posicao(_,'B')),
+	revealing(T, Matriz, MatrizRevelada).
+	
 % se a posição tem bombas ao redor
 revealing([QuantColunas|T], Matriz, MatrizRevelada) :- 
 	getCoordenada(Matriz, QuantColunas, posicao(_,Z)),
