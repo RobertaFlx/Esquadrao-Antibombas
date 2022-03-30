@@ -1,11 +1,10 @@
 :- use_module(library(clpfd)).
 
-
 red().
 white().
 green().
 yellow().
-
+cyan().
 
 startGame(QuantLinhas,QuantColunas,QuantBombasLetais,QuantBombas) :-
     writeln(''),
@@ -107,6 +106,7 @@ getMove(Jogada, X, Y) :-
 
 % Identifica tipo de jogada feita.
 typeMove(alerta, X, Y) --> ['A','l','e','r','t','a'], [' '], coords(X, Y).
+typeMove(desativa, X, Y) --> ['D','e','s','a','t','i','v','a','r'], [' '], coords(X, Y).
 typeMove(revela, X, Y) --> ['A','b','r','i','r'], [' '], coords(X, Y).
 coords(Xi, Yi) --> number_(X), { number_chars(Xi, X) }, [' '], number_(Y), { number_chars(Yi, Y) }.
 
@@ -135,12 +135,14 @@ printMatrizUsuario(coordenada(X,_), dim(X,_), posicao(Z,A), posicao(Z,A)) :-
 	 (Z =@= 'L', colorRed2(Z); 
 	  Z =@= 'B', colorGreen2(Z);
 	  Z =@= 'A', colorYellow2(Z);
+	  Z =@= 'D', colorCyan2(Z);
 	 format(" ~w~n", Z)).
 printMatrizUsuario(coordenada(X,_), dim(QuantLinhas,_), posicao(Z,A), posicao(Z,A)) :- 
 	dif(X,QuantLinhas), (
 		Z =@= 'L', colorRed1(Z);
 		Z =@= 'B', colorGreen1(Z);
 		Z =@= 'A', colorYellow1(Z);
+        Z =@= 'D', colorCyan1(Z);
 		format(" ~w ", Z)).
 
 colorRed1(Z):- ansi_format([bold,fg(red)], ' ~w ', [Z]).
@@ -152,17 +154,21 @@ colorGreen2(Z):- ansi_format([bold,fg(green)], ' ~w~n', [Z]).
 colorYellow1(Z):- ansi_format([bold,fg(yellow)], ' ~w ', [Z]).
 colorYellow2(Z):- ansi_format([bold,fg(yellow)], ' ~w~n', [Z]).
 
+colorCyan1(Z):- ansi_format([bold,fg(cyan)], ' ~w ', [Z]).
+colorCyan2(Z):- ansi_format([bold,fg(cyan)], ' ~w~n', [Z]).
 
 printMatrizInterna(coordenada(X,_), dim(X,_), posicao(Z,A), posicao(Z,A)) :- 
 	 (A =@= 'L', colorRed2(A); 
 	  A =@= 'B', colorGreen2(A);
 	  A =@= 'A', colorYellow2(A);
+      A =@= 'D', colorCyan2(A);
 	 format(" ~w~n", A)).
 printMatrizInterna(coordenada(X,_), dim(QuantLinhas,_), posicao(Z,A), posicao(Z,A)) :-
 	dif(X,QuantLinhas), (
 		A =@= 'L', colorRed1(A);
 		A =@= 'B', colorGreen1(A);
 		A =@= 'A', colorYellow1(A);
+		A =@= 'D', colorCyan1(A);
 		format(" ~w ", A)).	
 
 % função para concatenar as bombas na lista
@@ -223,6 +229,11 @@ adjacentsPositions(coordenada(X,Y), dim(QuantLinhas,QuantColunas), coordenada(Ax
 actions(alerta, Posicao, Matriz, MatrizComNovoAlerta) :-
 	getCoordenada(Matriz, Posicao, posicao(_,Z)),
 	modifyMatriz(Matriz, Posicao, posicao('A',Z), MatrizComNovoAlerta).
+	
+% Jogada que desativa uma bomba na posição especificada.
+actions(desativa, Posicao, Matriz, MatrizDesativada) :-
+	getCoordenada(Matriz, Posicao, posicao(_,Z)),
+	modifyMatriz(Matriz, Posicao, posicao('D',Z), MatrizDesativada).
 
 % Jogada que abre caminho em uma posição que contem uma bomba letal, resultando no fim do jogo.
 actions(revela, Posicao, Matriz, MatrizDerrota) :-
@@ -236,7 +247,6 @@ actions(revela, Posicao, Matriz, MatrizRevelada) :-
 	modifyMatriz(Matriz, Posicao, posicao(Z,Z), MatrizAlterada),
 	revealsMatriz(Posicao, MatrizAlterada, MatrizRevelada).
 	
-
 % revela recursivo
 revealsMatriz(coordenada(X,Y), campo(QuantLinhas,QuantColunas,Posicoes), MatrizRevelada) :-
 	findall(coordenada(Ax,Ay), (
@@ -282,4 +292,4 @@ playing(_,_,posicao(Z,_),_) :- Z \= 'L'.
 
 win(_,_,posicao(Z,Z),_) :- integer(Z).
 win(_,_,posicao('A','L'),_).
-win(_,_,posicao('B','B'),_).
+win(_,_,posicao('D','B'),_).
