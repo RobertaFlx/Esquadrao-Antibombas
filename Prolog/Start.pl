@@ -1,8 +1,8 @@
 :- use_module(library(clpfd)).
 
-startGame(QuantLinhas,QuantColunas,QuantBombasLetais) :-
+startGame(QuantLinhas,QuantColunas,QuantBombasLetais,QuantBombas) :-
     writeln(''),
-	matrizGenerate(QuantColunas, QuantLinhas, QuantBombasLetais, Matriz),
+	matrizGenerate(QuantColunas, QuantLinhas, QuantBombasLetais, QuantBombas, Matriz),
 	!,
 	get_time(Time),
 	start(Matriz,Time),
@@ -10,7 +10,7 @@ startGame(QuantLinhas,QuantColunas,QuantBombasLetais) :-
 
 start(Matriz,Time) :- % jogador ganhou
 	traversesMatriz(win, Matriz),
-	traversesMatriz(printMatriz, Matriz),
+	traversesMatriz(printMatrizUsuario, Matriz),
 	writeln('
  __________________________________________ 
 |                                          | 
@@ -21,7 +21,7 @@ start(Matriz,Time) :- % jogador ganhou
 
 start(Matriz,Time) :- % jogador perdeu
 	\+ traversesMatriz(playing, Matriz),
-	traversesMatriz(printMatriz, Matriz),
+	traversesMatriz(printMatrizInterna, Matriz),
 	writeln('
  __________________________________________ 
 |                                          |
@@ -30,61 +30,62 @@ start(Matriz,Time) :- % jogador perdeu
 |         ▀   ▀▀▀ ▀ ▀ ▀▀  ▀▀▀  ▀▀          |
 |__________________________________________|'),halt.
 	  
-continua(TimeDif):-
-	 (TimeDif >= 540,writeln( "
-      __________________________________________ 
-     |                                          |
-     |          ▀█▀ █▀▀ █▀▄▀█ █▀█ █▀█           |
-     |           █  █▀  █ █ █ █▀▀ █ █           |
-     |           ▀  ▀▀▀ ▀ ▀ ▀ ▀   ▀▀▀           |
-     |                                          |
-     |     █▀▀ █▀▀ █▀▀ █▀█ ▀█▀ █▀█ █▀▄ █▀█      |
-     |     █▀  ▀▀█ █ ▄ █ █  █  █▀█ █ █ █ █      |
-     |     ▀▀▀ ▀▀▀ ▀▀▀ ▀▀▀  ▀  ▀ ▀ ▀▀  ▀▀▀      |
-     |__________________________________________|"),halt; 
-	  TimeDif <60).
+verify(TimeDif):-(TimeDif >= 540,
+	writeln('
+ __________________________________________ 
+|                                          |
+|          ▀█▀ █▀▀ █▀▄▀█ █▀█ █▀█           |
+|           █  █▀  █ █ █ █▀▀ █ █           |
+|           ▀  ▀▀▀ ▀ ▀ ▀ ▀   ▀▀▀           |
+|                                          |
+|     █▀▀ █▀▀ █▀▀ █▀█ ▀█▀ █▀█ █▀▄ █▀█      |
+|     █▀  ▀▀█ █ ▄ █ █  █  █▀█ █ █ █ █      |
+|     ▀▀▀ ▀▀▀ ▀▀▀ ▀▀▀  ▀  ▀ ▀ ▀▀  ▀▀▀      |
+|__________________________________________|'),halt; TimeDif < 540).
 	  
 start(Matriz,Time) :- % jogador nem ganhou nem perdeu
-	traversesMatriz(printMatriz, Matriz),
+	traversesMatriz(printMatrizUsuario, Matriz),
 	writeln(''),
 	writeln('Informe sua Jogada:'),
 	getMove(Jogada, X, Y),
 	writeln(''),
 	get_time(TimeAtual),
 	TimeDif is TimeAtual - Time,
-	continua(TimeDif),
+	verify(TimeDif), 
 	writeln(''),
-	writeln(Matriz),
+	% writeln(Matriz),
 	actions(Jogada, coordenada(X,Y), Matriz, MatrizRevelada),
 	!,
 	start(MatrizRevelada,Time).
 
 
 % Cria uma nova matriz que será o campo.
-matrizGenerate(QuantLinhas, QuantColunas, QuantBombasLetais, campo(QuantLinhas,QuantColunas,PosicoesMapeadas)) :-
-	% gera uma lista
+matrizGenerate(QuantLinhas, QuantColunas, QuantBombasLetais, QuantBombas, campo(QuantLinhas,QuantColunas,PosicoesMapeadas)) :-
+	% gera uma lista inicial de posições
 	TotalPosicoes is QuantLinhas * QuantColunas,
 	length(Posicoes, TotalPosicoes),
 
-	length(ListaDeLetais, 4),
-	maplist(=('B'), ListaDeLetais), 
+	% gera uma lista de bombas desarmáveis
+	length(ListaDeNormais, QuantBombas),
+	maplist(=('B'), ListaDeNormais), 
 	
-	length(ListaBombasLetais, QuantBombasLetais),
-	maplist(=('L'), ListaBombasLetais), 
+	% gera uma lista de bombas letais
+	length(ListaDeLetais, QuantBombasLetais),
+	maplist(=('L'), ListaDeLetais), 
 	
-	% Une as duas listas em uma só
-	append(ListaDeLetais,ListaBombasLetais, ListaBombasJuntas),
+	% concatena as duas listas de bombas em uma 
+	append(ListaDeNormais, ListaDeLetais, ListaBombasJuntas),
 
-	% concatena a lista de bombas com a lista original
-	addBombsLetais(Posicoes, ListaBombasJuntas, ListaComLetais), 
+	% concatena a lista de bombas com a lista inicial
+	addBombs(Posicoes, ListaBombasJuntas, ListaComBombas), 
 
-	% Permuta a lista, colocando as bombas letais em posições aleatórias.
-	random_permutation(ListaComLetais, ListaPermutada), 
+	% Permuta a lista, colocando as bombas normais e letais em posições aleatórias
+	random_permutation(ListaComBombas, ListaFinal), 
 	
-	% converte a lista inicial para uma matriz
-	generateMatriz(ListaPermutada, QuantLinhas, QuantColunas, MatrizFinal),
+	% converte a lista final para uma matriz
+	generateMatriz(ListaFinal, QuantLinhas, QuantColunas, MatrizFinal),
 	
-	writeln(MatrizFinal),
+	% writeln(MatrizFinal),
 
 	traversesMatriz(countAdjacentLetais(campo(QuantLinhas,QuantColunas,MatrizFinal)),
 	campo(QuantLinhas,QuantColunas,MatrizFinal), 
@@ -123,13 +124,16 @@ traverseLines([QuantColunas|T], coordenada(X, Y), Z, PosicaoFinal, [Posicao|L]) 
 	succ(X, X1),
 	traverseLines(T, coordenada(X1, Y), Z, PosicaoFinal, L).	
 	
-printMatriz(coordenada(X,_), dim(X,_), posicao(Z,A), posicao(Z,A)) :- format(" ~w~n", Z).
-printMatriz(coordenada(X,_), dim(QuantLinhas,_), posicao(Z,A), posicao(Z,A)) :- dif(X,QuantLinhas), format(" ~w ", Z).	
+printMatrizUsuario(coordenada(X,_), dim(X,_), posicao(Z,A), posicao(Z,A)) :- format(" ~w~n", Z).
+printMatrizUsuario(coordenada(X,_), dim(QuantLinhas,_), posicao(Z,A), posicao(Z,A)) :- dif(X,QuantLinhas), format(" ~w ", Z).	
 	
+printMatrizInterna(coordenada(X,_), dim(X,_), posicao(Z,A), posicao(Z,A)) :- format(" ~w~n", A).
+printMatrizInterna(coordenada(X,_), dim(QuantLinhas,_), posicao(Z,A), posicao(Z,A)) :- dif(X,QuantLinhas), format(" ~w ", A).	
+
 % função para concatenar as bombas na lista
-addBombsLetais(P, [], P).
-addBombsLetais([_|Pt], [B|Bt], [B|L]) :-
-	addBombsLetais(Pt, Bt, L).
+addBombs(P, [], P).
+addBombs([_|Pt], [B|Bt], [B|L]) :-
+	addBombs(Pt, Bt, L).
 
 generateMatriz([], _, 0, []).
 generateMatriz(P, QuantLinhas, QuantColunas, [Linha|PosicoesRestantes]) :-
