@@ -1,5 +1,12 @@
 :- use_module(library(clpfd)).
 
+
+red().
+white().
+green().
+yellow().
+
+
 startGame(QuantLinhas,QuantColunas,QuantBombasLetais,QuantBombas) :-
     writeln(''),
 	matrizGenerate(QuantColunas, QuantLinhas, QuantBombasLetais, QuantBombas, Matriz),
@@ -124,11 +131,39 @@ traverseLines([QuantColunas|T], coordenada(X, Y), Z, PosicaoFinal, [Posicao|L]) 
 	succ(X, X1),
 	traverseLines(T, coordenada(X1, Y), Z, PosicaoFinal, L).	
 	
-printMatrizUsuario(coordenada(X,_), dim(X,_), posicao(Z,A), posicao(Z,A)) :- format(" ~w~n", Z).
-printMatrizUsuario(coordenada(X,_), dim(QuantLinhas,_), posicao(Z,A), posicao(Z,A)) :- dif(X,QuantLinhas), format(" ~w ", Z).	
-	
-printMatrizInterna(coordenada(X,_), dim(X,_), posicao(Z,A), posicao(Z,A)) :- format(" ~w~n", A).
-printMatrizInterna(coordenada(X,_), dim(QuantLinhas,_), posicao(Z,A), posicao(Z,A)) :- dif(X,QuantLinhas), format(" ~w ", A).	
+printMatrizUsuario(coordenada(X,_), dim(X,_), posicao(Z,A), posicao(Z,A)) :-
+	 (Z =@= 'L', colorRed2(Z); 
+	  Z =@= 'B', colorGreen2(Z);
+	  Z =@= 'A', colorYellow2(Z);
+	 format(" ~w~n", Z)).
+printMatrizUsuario(coordenada(X,_), dim(QuantLinhas,_), posicao(Z,A), posicao(Z,A)) :- 
+	dif(X,QuantLinhas), (
+		Z =@= 'L', colorRed1(Z);
+		Z =@= 'B', colorGreen1(Z);
+		Z =@= 'A', colorYellow1(Z);
+		format(" ~w ", Z)).
+
+colorRed1(Z):- ansi_format([bold,fg(red)], ' ~w ', [Z]).
+colorRed2(Z):- ansi_format([bold,fg(red)], ' ~w~n', [Z]).
+
+colorGreen1(Z):- ansi_format([bold,fg(green)], ' ~w ', [Z]).
+colorGreen2(Z):- ansi_format([bold,fg(green)], ' ~w~n', [Z]).
+
+colorYellow1(Z):- ansi_format([bold,fg(yellow)], ' ~w ', [Z]).
+colorYellow2(Z):- ansi_format([bold,fg(yellow)], ' ~w~n', [Z]).
+
+
+printMatrizInterna(coordenada(X,_), dim(X,_), posicao(Z,A), posicao(Z,A)) :- 
+	 (A =@= 'L', colorRed2(A); 
+	  A =@= 'B', colorGreen2(A);
+	  A =@= 'A', colorYellow2(A);
+	 format(" ~w~n", A)).
+printMatrizInterna(coordenada(X,_), dim(QuantLinhas,_), posicao(Z,A), posicao(Z,A)) :-
+	dif(X,QuantLinhas), (
+		A =@= 'L', colorRed1(A);
+		A =@= 'B', colorGreen1(A);
+		A =@= 'A', colorYellow1(A);
+		format(" ~w ", A)).	
 
 % função para concatenar as bombas na lista
 addBombs(P, [], P).
