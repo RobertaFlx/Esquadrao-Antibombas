@@ -247,3 +247,4 @@ playing(_,_,posicao(Z,_),_) :- Z \= 'L'.
 
 win(_,_,posicao(Z,Z),_) :- integer(Z).
 win(_,_,posicao('A','L'),_).
+win(_,_,posicao('B','B'),_).
