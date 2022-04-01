@@ -2,7 +2,7 @@
 :- include('Screen.pl').
 :- include('Credits').
 :- include('Rules.pl').
-:- include('Start.pl').
+:- include('Instructions.pl').
 
 title([ 
     " ____________________________________________________ ",
@@ -59,7 +59,7 @@ mainLoop(Index):-
     
     (Key = 'w', NewIndex = ((Index - 1) + MaxIndex) mod MaxIndex;
 	 Key = 's', NewIndex = ((Index + 1) + MaxIndex) mod MaxIndex;
-     Key = 'f', Index =:= 0, startGame(9,9,5,4); % Iniciar Jogo
+     Key = 'f', Index =:= 0, instructions; % Iniciar Jogo
      Key = 'f', Index =:= 1, rules;
      Key = 'f', Index =:= 2, credits;
      Key = 'f', Index =:= 3, halt),
