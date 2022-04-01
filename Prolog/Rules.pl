@@ -7,18 +7,12 @@ textoRules([
     "|   que você ainda não tem treinamento necessário para desativar. O objetivo do jogo é conseguir andar pelo campos seguros,     |",
     "|   descobrindo onde estão as bombas e as desarmando quando possível.                                                           |",
     "|                                                                                                                               |",
-    "|   >>> O jogador inicia o teste com nota máxima, conforme o passar do jogo, sua nota poderá diminuir de acordo com os erros    |",
-    "|       cometidos no teste.                                                                                                     |",
+    "|   >>> Se o jogador tentar abrir caminho em uma bomba letal, automaticamente, ele é reprovado no teste e o jogo termina.       |",                                                                                                        |",
     "|                                                                                                                               |",
-    "|   >>> Se o jogador errar mais de três vezes, ficará abaixo da média e reprovará no teste, desta forma, o jogo termina.        |",
+    "|   >>> Um cronometro é iniciado junto com o início da partida, se o cronometro zerar, o jogador é reprovado e o jogo termina.  |", 
     "|                                                                                                                               |",
-    "|   >>> Erros são contados apenas quando o jogador tentar desativar uma bomba em um campo que não possui bomba ou abrir um      |",
-    "|       caminho já revelado.                                                                                                    |",
-    "|                                                                                                                               |",
-    "|   >>> Se o jogador tentar desarmar ou abrir caminho em uma bomba letal, automaticamente, ele é reprovado no teste e o         |",
-    "|       jogo termina.                                                                                                           |",
-    "|                                                                                                                               |",
-    "|   >>> Um cronometro é iniciado junto com o início da partida, se o cronometro zerar, o jogador é reprovado e o jogo termina.  |",                                             
+    "|   >>> Para ganhar, o jogador deve desativar todas as Bombas B, revelar todos os campos sem bomba e adicionar um alerta        |",
+    "|       em todos os campos com suspeita de serem bombas letais L.                                                               |",                                                                |",
     "|_______________________________________________________________________________________________________________________________|"]).
     
 
